@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -80,19 +81,37 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'mysql.connector.django',
-        'NAME': 'siscolegio_db',       # El nombre de la base de datos que creaste en MariaDB
-        'USER': 'root',            # Tu usuario de MariaDB
-        'PASSWORD': 'root', # Tu contraseña de MariaDB
-        'HOST': '127.0.0.1',       # O 'localhost'
-        'PORT': '3307',            # Puerto por defecto
-        'OPTIONS': {
-            'use_pure': True,
-        },
+# Detectamos si estamos en producción (Render) mediante la variable DATABASE_URL
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=False  # Evita que dj_database_url inyecte configuraciones por defecto incorrectas
+        )
     }
-}
+    
+    # 🔍 CORRECCIÓN PYMYSQL PARA EL SSL-MODE DE AIVEN EN RENDER:
+    if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
+        options = DATABASES['default']['OPTIONS']
+        if 'ssl-mode' in options:
+            ssl_value = options.pop('ssl-mode')  # Sacamos 'ssl-mode' con guion para que no rompa PyMySQL
+            if ssl_value in ['REQUIRED', 'required', True]:
+                options['ssl'] = {'ssl': True}   # Lo configuramos como lo entiende PyMySQL
+else:
+    # 💻 TU CONFIGURACIÓN LOCAL (Tu PC con MariaDB)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mysql.connector.django',
+            'NAME': 'siscolegio_db',
+            'USER': 'root',
+            'PASSWORD': 'root',
+            'HOST': '127.0.0.1',
+            'PORT': '3307',
+            'OPTIONS': {
+                'use_pure': True,
+            },
+        }
+    }
 
 
 # Password validation
@@ -118,69 +137,33 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'es-ve'
-
 TIME_ZONE = 'America/Caracas'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
-# Esta es la línea clave que le dice a Django dónde buscar carpetas 'static' manuales
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
-# (Opcional) Donde se juntarán todos al final
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-AUTH_USER_MODEL = 'users.Usuario'# Agrega esta línea para usar tu modelo de usuario personalizado
-
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# Configuración de Cloudinary
-import dj_database_url
-
 # =====================================================================
-# CONFIGURACIÓN DINÁMICA ENTORNO LOCAL / PRODUCCIÓN (RENDER)
+# CONFIGURACIÓN DE ENTORNO EN PRODUCCIÓN (RENDER)
 # =====================================================================
 
-# 1. Seguridad
-SECRET_KEY = os.environ.get('SECRET_KEY', 'clave-secreta-local-de-emergencia-123')
+# 1. Seguridad e Infraestructura
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-f7h$-3+w0k_tmmy&63epb&mh-lc!-3p)!of26h=b#3xhy0cx26')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
-# 2. Base de Datos Inteligente
-DATABASES = {
-    'default': dj_database_url.config(
-        # REEMPLAZA EL TEXTO DE ABAJO con los datos reales de tu MariaDB local actual
-        default='mysql://root:root@127.0.0.1:3307/siscolegio_db',
-        conn_max_age=600
-    )
-}
-
-# 3. Archivos Estáticos (WhiteNoise)
+# 2. Archivos Estáticos (WhiteNoise)
 STATIC_URL = 'static/'
-WHITENOISE_MANIFEST_STRICT = False
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+WHITENOISE_MANIFEST_STRICT = False
 
+# 3. Archivos Multimedia y Almacenamiento (Cloudinary)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Estructura unificada para Django moderno
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'users.Usuario'
+
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -198,6 +181,3 @@ CLOUDINARY_STORAGE = {
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '861756927926695'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'vIxCvpekrNGTquLrSTy1RjK_mXA'),
 }
-
-
-
