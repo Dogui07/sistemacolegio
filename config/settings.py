@@ -177,23 +177,25 @@ DATABASES = {
 # 3. Archivos Estáticos (WhiteNoise)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
 
-# 4. Almacenamiento en la nube (Cloudinary)
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Estructura unificada para Django moderno
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",  # <-- Cloudinary para fotos/archivos subidos
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # <-- WhiteNoise para el diseño CSS/JS
+    },
+}
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dozrhfngb'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '861756927926695'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'vIxCvpekrNGTquLrSTy1RjK_mXA'),
 }
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 
 
 
