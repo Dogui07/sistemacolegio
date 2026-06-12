@@ -151,6 +151,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-f7h$-3+w0k_tmmy&63epb
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+# =====================================================================
+# CONFIGURACIÓN DE SEGURIDAD EXCLUSIVA PARA PRODUCCIÓN (RENDER)
+# =====================================================================
+if not DEBUG:
+    # Le dice a Django que confíe en el proxy HTTPS de Render
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # Dominios de confianza para permitir peticiones POST (Seguridad CSRF)
+    CSRF_TRUSTED_ORIGINS = [
+        'https://sistemacolegio.onrender.com',
+    ]
+    
+    # (Opcional recomendado) Fuerza el uso de HTTPS en las cookies
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # 2. Archivos Estáticos (WhiteNoise)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
