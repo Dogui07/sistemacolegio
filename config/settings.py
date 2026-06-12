@@ -146,14 +146,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.Usuario'# Agrega esta línea para usar tu modelo de usuario personalizado
 
-import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Configuración de Cloudinary
-import os
 import dj_database_url
 
 # =====================================================================
@@ -184,12 +182,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Estructura unificada para Django moderno
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",  # <-- Cloudinary para fotos/archivos subidos
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # <-- WhiteNoise para el diseño CSS/JS
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Línea de compatibilidad requerida por django-cloudinary-storage en Django 6.x
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dozrhfngb'),
