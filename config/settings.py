@@ -174,6 +174,7 @@ DATABASES = {
 
 # 3. Archivos Estáticos (WhiteNoise)
 STATIC_URL = 'static/'
+WHITENOISE_MANIFEST_STRICT = False
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
