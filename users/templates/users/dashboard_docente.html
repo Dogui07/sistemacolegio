@@ -1,0 +1,65 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="space-y-6">
+    <header class="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800">🧑‍🏫 Panel del Docente</h1>
+            <p class="text-slate-500">Gestión académica de evaluaciones - {{ colegio.nombre }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold">
+                Periodo: {{ anio_activo.nombre|default:"Sin Año Activo" }}
+            </span>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+            <div class="text-center pb-4 border-b border-slate-100">
+                <div class="w-24 h-24 bg-slate-200 rounded-full mx-auto mb-3 flex items-center justify-center font-black text-2xl text-slate-600">
+                    {{ docente.nombre.0 }}{{ docente.apellido.0 }}
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">{{ docente.nombre }} {{ docente.apellido }}</h3>
+                <p class="text-sm text-slate-400">C.I: {{ docente.cedula }}</p>
+            </div>
+            <div class="mt-4 space-y-2 text-sm text-slate-600">
+                <p><strong>Especialidad:</strong> {{ docente.detalle_docente.especialidad|default:"No asignada" }}</p>
+                <p><strong>Teléfono:</strong> {{ docente.telefono|default:"---" }}</p>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                📚 Mis Asignaturas Asignadas
+            </h3>
+            
+            {% if asignaciones %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for asig in asignaciones %}
+                        <div class="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:shadow-md transition flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-slate-200 text-slate-700">
+                                    {{ asig.seccion.get_nivel_display }}
+                                </span>
+                                <h4 class="text-lg font-bold text-slate-800 mt-2">{{ asig.asignatura.nombre }}</h4>
+                                <p class="text-sm text-slate-500 font-medium">📍 {{ asig.seccion.grado }} - Sección "{{ asig.seccion.nombre }}"</p>
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-t border-slate-100">
+                                <a href="{% url 'ver_curso_docente' colegio.slug asig.id %}" class="w-full inline-flex justify-center items-center bg-slate-950 text-white text-sm py-2 rounded-lg font-bold hover:bg-slate-800 transition">
+                                    📝 Ver Curso y Notas
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12 text-slate-400 italic">
+                    No tienes asignaturas asignadas en el año escolar activo.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

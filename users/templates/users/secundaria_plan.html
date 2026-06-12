@@ -1,0 +1,59 @@
+{% extends 'users/base_dashboard.html' %}
+{% block content_dashboard %}
+<div class="space-y-6">
+    <a href="{% url 'ver_curso_docente' colegio.slug asignacion.id %}?lapso={{ lapso_actual }}" class="text-sm font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1">← Volver al Curso</a>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 text-sm rounded-xl bg-orange-50 border border-orange-200 text-orange-800 font-medium">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-fit">
+            <h3 class="font-black text-slate-800 text-lg mb-4">Agregar Actividad (Lapso {{ lapso_actual }})</h3>
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Descripción</label>
+                    <input type="text" name="descripcion" required placeholder="Ej: Taller Práctico de Mapas" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Ponderación (%)</label>
+                    <input type="number" name="ponderacion" min="1" max="100" required placeholder="Ej: 25" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold">
+                </div>
+                <button type="submit" class="w-full bg-slate-950 text-white text-sm py-2.5 rounded-xl font-bold hover:bg-slate-850 transition">
+                    ➕ Añadir al Plan
+                </button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Distribución de Carga del Lapso</h3>
+                <span class="text-xs font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-700">Acumulado: {{ porcentaje_total }}% / 100%</span>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase bg-slate-50">
+                        <th class="p-3">Actividad</th>
+                        <th class="p-3 text-center">Ponderación</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-slate-100">
+                    {% for act in plan_actividades %}
+                    <tr>
+                        <td class="p-3 font-semibold text-slate-800">{{ act.descripcion }}</td>
+                        <td class="p-3 text-center font-bold text-slate-600">{{ act.ponderacion }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="p-6 text-center text-slate-400 italic text-xs">Sin actividades cargadas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

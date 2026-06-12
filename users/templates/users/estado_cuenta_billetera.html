@@ -1,0 +1,164 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="space-y-8">
+    <header class="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div>
+            <a href="{% url 'dashboard_cantina' colegio.slug %}" class="inline-flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-wider hover:text-slate-600 transition mb-2">
+                <i class="fas fa-arrow-left"></i> Volver a Gestión Cantina
+            </a>
+            <h1 class="text-3xl font-black text-slate-800">Billetera Digital</h1>
+            <p class="text-slate-500">Estado de cuenta actual de: <strong class="text-slate-700">{{ estudiante.nombre }} {{ estudiante.apellido }}</strong></p>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-white p-3 border border-slate-100 rounded-2xl shadow-sm">
+            <div class="w-10 h-10 bg-slate-100 rounded-full overflow-hidden shrink-0 border border-slate-200">
+                {% if estudiante.foto %}
+                    <img src="{{ estudiante.foto.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-slate-400"><i class="fas fa-user"></i></div>
+                {% endif %}
+            </div>
+            <div>
+                <span class="text-[10px] font-black text-slate-400 uppercase block leading-none">Año / Sección</span>
+                <span class="text-xs font-black text-slate-700">
+                    {% if inscripcion %}
+                        {{ inscripcion.seccion.grado }} - "{{ inscripcion.seccion.nombre }}"
+                    {% else %}
+                        No Inscrito
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="space-y-2">
+            {% for message in messages %}
+                <div class="p-4 text-sm rounded-2xl border {% if message.tags == 'success' %}text-emerald-700 bg-emerald-50 border-emerald-100{% else %}text-rose-700 bg-rose-50 border-rose-100{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl p-6 text-white shadow-xl shadow-orange-500/10 flex justify-between items-center relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-white/10 text-9xl pointer-events-none">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-xs font-black uppercase tracking-widest text-orange-100 opacity-90">Saldo Disponible</p>
+                    <p class="text-4xl font-black mt-2">Bs. {{ saldo_billetera|floatformat:2 }}</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 text-center relative z-10">
+                    <span class="text-[9px] font-black uppercase tracking-wider block text-orange-100">Cuentas</span>
+                    <span class="text-xs font-bold">Madre Laura</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                    <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-exchange-alt text-orange-500"></i> Historial de Movimientos
+                    </h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                                <th class="px-6 py-4 italic">Fecha</th>
+                                <th class="px-6 py-4 italic">Detalle / Operación</th>
+                                <th class="px-6 py-4 italic text-right">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            {% for mov in movimientos %}
+                            <tr class="hover:bg-slate-50/50 transition">
+                                <td class="px-6 py-4 text-xs font-bold text-slate-400 uppercase">
+                                    {{ mov.fecha|date:"d M Y - h:i a" }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2.5">
+                                        {% if mov.tipo == 'RECARGA' %}
+                                            <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] border border-emerald-100"><i class="fas fa-plus"></i></span>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-700">{{ mov.concepto }}</p>
+                                                <p class="text-[10px] text-slate-400">{{ mov.rubro_info }}</p>
+                                            </div>
+                                        {% else %}
+                                            <span class="w-6 h-6 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-[10px] border border-orange-100"><i class="fas fa-utensils"></i></span>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-700">{{ mov.concepto }}</p>
+                                                <p class="text-[10px] text-slate-400 uppercase font-semibold tracking-wide text-orange-600">{{ mov.rubro_info }}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right font-black text-sm {% if mov.tipo == 'RECARGA' %}text-emerald-600{% else %}text-slate-700{% endif %}">
+                                    {% if mov.tipo == 'RECARGA' %}+{% else %}-{% endif %}Bs. {{ mov.monto|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-6 py-12 text-center text-slate-400 text-sm italic">
+                                    No se registran transacciones de cantina en este período.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2 mb-2">
+                    <i class="fas fa-piggy-bank text-emerald-500"></i> Reportar Recarga
+                </h2>
+                <p class="text-xs text-slate-400 mb-6">Completa los campos del comprobante de depósito o pago móvil.</p>
+
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Método de Pago</label>
+                        <select name="metodo_pago" required class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white focus:ring-0 rounded-2xl py-3 px-4 text-sm font-bold text-slate-700 transition-colors">
+                            <option value="PAGO_MOVIL">Pago Móvil</option>
+                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                            <option value="EFECTIVO">Efectivo Directo en Cantina</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Monto (Bs.)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-sm font-black text-slate-400">Bs.</span>
+                            <input type="number" name="monto" step="0.01" required min="0.01" placeholder="0.00"
+                                   class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white focus:ring-0 rounded-2xl py-3 pl-12 pr-4 text-sm font-bold text-slate-700 transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Número de Referencia</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-sm text-slate-400"><i class="fas fa-hashtag"></i></span>
+                            <input type="text" name="referencia" required placeholder="Nº de comprobante bancario"
+                                   class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white focus:ring-0 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold text-slate-700 transition-colors">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-slate-900 text-white rounded-2xl py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-800 transition-all mt-6 shadow-lg shadow-slate-900/10">
+                        <i class="fas fa-paper-plane"></i> Registrar Operación
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

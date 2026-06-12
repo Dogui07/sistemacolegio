@@ -1,0 +1,294 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-3xl mx-auto">
+    
+    <div class="flex items-center gap-4 mb-8">
+        {% if request.user.rol.nombre == 'Representante' %}
+            <a href="{% url 'estado_cuenta_estudiante' colegio.slug estudiante_obj.id %}" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+        {% else %}
+            <a href="{% url 'gestionar_pagos' colegio.slug %}?anio_escolar={{ anio_activo.id }}" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+        {% endif %}
+                <i class="fas fa-chevron-left text-xs"></i>
+            </a>
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase">
+                {% if request.user.rol.nombre == 'Representante' %}
+                    Reportar Pago de Obligación
+                {% elif cuota_obj %}
+                    Solventar Compromiso
+                {% else %}
+                    Registrar Pago Extraordinario / Especial
+                {% endif %}
+            </h1>
+            <p class="text-sm text-slate-500">Período Activo: <span class="text-blue-600 font-bold">{{ anio_activo.nombre }}</span></p>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-6">
+        {% csrf_token %}
+
+        {% if cuota_obj %}
+            <input type="hidden" id="id_monto_cuota_original" value="{{ cuota_obj.monto|stringformat:'.2f' }}">
+            <input type="hidden" name="pago_id" value="{{ cuota_obj.id }}">
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <span class="text-[9px] font-black tracking-wider text-blue-500 uppercase block mb-1">Estudiante Seleccionado</span>
+                    <p class="text-sm font-black text-slate-800 uppercase">{{ estudiante_obj.apellido }}, {{ estudiante_obj.nombre }}</p>
+                    <p class="text-xs text-slate-500 font-mono mt-0.5">Cédula: V-{{ estudiante_obj.cedula }}</p>
+                </div>
+                <div class="md:border-l md:border-slate-200 md:pl-4 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[9px] font-black tracking-wider text-amber-500 uppercase block mb-1">Detalle de Obligación</span>
+                        <p class="text-sm font-bold text-slate-700 uppercase">{{ cuota_obj.detalle }}</p>
+                        <p class="text-xs text-red-600 font-bold mt-0.5">Vence: {{ cuota_obj.fecha_vencimiento|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Monto del Compromiso:</span>
+                        <span class="text-sm font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">$ {{ cuota_obj.monto|stringformat:'.2f' }} USD</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <input type="hidden" id="id_monto_cuota_original" value="0">
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Seleccionar Estudiante</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <select name="estudiante" id="id_estudiante" onchange="alternarFiltroMasivo()" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer uppercase">
+                        <option value="" disabled selected>-- SELECCIONE UN ESTUDIANTE --</option>
+                        {% if request.user.rol.nombre != 'Representante' %}
+                            <option value="todos" class="text-blue-600 font-black">-- TODOS LOS ESTUDIANTES (PAGO MASIVO) --</option>
+                        {% endif %}
+                        {% for e in estudiantes %}
+                            <option value="{{ e.id }}">{{ e.apellido }}, {{ e.nombre }} (C.I: {{ e.cedula|default:'N/A' }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if request.user.rol.nombre != 'Representante' %}
+            <div id="contenedor_seccion_masiva" class="hidden p-5 bg-blue-50/40 border border-blue-100 rounded-2xl flex flex-col gap-1.5 transition-all">
+                <label class="block text-[10px] font-black text-blue-600 uppercase ml-1 tracking-wider">Filtrar por Sección / Aula Destino</label>
+                <div class="relative">
+                    <select name="seccion_filtro" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none uppercase cursor-pointer">
+                        <option value="">-- TODAS LAS SECCIONES DEL COLEGIO --</option>
+                        {% for s in secciones %}
+                            <option value="{{ s.id }}">{{ s.get_nivel_display }} - {{ s.grado }} "{{ s.nombre }}"</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="text-[11px] text-blue-500 font-medium mt-1 ml-1"><i class="fas fa-info-circle"></i> Se creará de forma simultánea este registro de pago a cada estudiante activo en la sección elegida.</p>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <h2 class="text-2xl font-black text-slate-800 tracking-tighter">
+            Rellene Los Datos Del {% if cuota_obj %} Pago Realizado{% else %} Nuevo Pago{% endif %}
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">N° de Referencia / Recibo</label>
+                <div class="relative">
+                    <i class="fas fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="num_referencia" placeholder="EJ. 123456789" required
+                           class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all uppercase">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Fecha de Pago</label>
+                <div class="relative">
+                    <input type="date" name="fecha_pago" id="id_fecha_pago" required 
+                           value="{% now 'Y-m-d' %}"
+                           class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer uppercase">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Banco</label>
+                <div class="relative">
+                    <select name="banco" required class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer uppercase">
+                        <option value="" disabled selected>-- SELECCIONE BANCO --</option>
+                        {% for value, nombre in bancos %}
+                            <option value="{{ value }}">{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Titular de la Cuenta</label>
+                <div class="relative">
+                    <input type="text" name="titular_cuenta" placeholder="Nombre completo" required
+                           class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all uppercase">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Método de Pago</label>
+                <div class="relative">
+                    <i class="fas fa-wallet absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <select name="metodo_pago" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer uppercase">
+                        <option value="" disabled selected>-- SELECCIONE MÉTODO --</option>
+                        {% for value, nombre in metodos_pago %}
+                            <option value="{{ value }}">{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Precio del Dolar a la fecha del pago</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs">Bs.</span>
+                    <input type="number" id="id_precio_dolar" name="precio_dolar" step="0.0001" readonly required placeholder="0.00" 
+                           class="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-500 cursor-not-allowed outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Monto Total Bolivares</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs">Bs.</span>
+                    <input type="number" id="id_monto_bs" name="monto_bs" step="0.01" min="0.01" required placeholder="0.00" 
+                           value="{% if cuota_obj and cuota_obj.monto_bs %}{{ cuota_obj.monto_bs|stringformat:'.2f' }}{% endif %}"
+                           class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Monto Total Dolares</label>
+                <div class="relative">
+                    <i class="fas fa-dollar-sign absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="number" id="id_monto_usd" name="monto" step="0.01" readonly required placeholder="0.00" 
+                           value="{% if cuota_obj %}{{ cuota_obj.monto|stringformat:'.2f' }}{% endif %}"
+                           class="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-500 cursor-not-allowed outline-none">
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-slate-100/80 my-2">
+
+        <div>
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Concepto / Detalle</label>
+            <textarea name="detalle" rows="2" placeholder="EJ. GASTOS OPERATIVOS / SEGURO ESCOLAR..." required
+                      {% if request.user.rol.nombre == 'Representante' %}readonly class="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-500 resize-none uppercase cursor-not-allowed outline-none"{% else %}class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all resize-none uppercase"{% endif %}>{% if cuota_obj %}{{ cuota_obj.detalle }}{% endif %}</textarea>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl border border-slate-100/60 p-5">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-3 ml-1 tracking-wider flex items-center gap-1.5">
+                <i class="fas fa-camera text-blue-500"></i> Comprobante de Pago (Imagen o PDF)
+            </label>
+            <input type="file" name="comprobante" accept="image/*,.pdf" required
+                   class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer">
+        </div>
+
+        <div class="flex gap-3 justify-end mt-4">
+            {% if request.user.rol.nombre == 'Representante' %}
+                <a href="{% url 'estado_cuenta_estudiante' colegio.slug estudiante_obj.id %}" 
+                   class="bg-slate-100 text-slate-600 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm">
+                     Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-paper-plane"></i> Enviar Reporte de Pago
+                </button>
+            {% else %}
+                <a href="{% url 'gestionar_pagos' colegio.slug %}?anio_escolar={{ anio_activo.id }}" 
+                   class="bg-slate-100 text-slate-600 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm">
+                     Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition text-sm flex items-center gap-2">
+                    <i class="fas fa-save"></i> {% if cuota_obj %}Procesar Solvencia{% else %}Crear Pago{% endif %}
+                </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    const inputFecha = document.getElementById('id_fecha_pago');
+    const inputTasa = document.getElementById('id_precio_dolar');
+    const inputMontoBs = document.getElementById('id_monto_bs');
+    const inputMontoUsd = document.getElementById('id_monto_usd');
+    const inputMontoCuotaOriginal = document.getElementById('id_monto_cuota_original');
+
+    let esCargaInicial = true;
+
+    async function consultarTasaPorFecha() {
+        const fecha = inputFecha.value;
+        if (!fecha) return;
+
+        try {
+            const url = `{% url 'obtener_tasa_ajax' colegio.slug %}?fecha=${fecha}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.precio) {
+                const tasaCambio = parseFloat(data.precio);
+                inputTasa.value = tasaCambio.toFixed(2);
+                
+                const montoOriginalUsd = parseFloat(inputMontoCuotaOriginal.value) || 0;
+                
+                if (montoOriginalUsd > 0 && esCargaInicial && (!inputMontoBs.value || inputMontoBs.value === "0.00" || inputMontoBs.value === "0")) {
+                    const sugeridoBs = montoOriginalUsd * tasaCambio;
+                    inputMontoBs.value = sugeridoBs.toFixed(2);
+                }
+            } else {
+                inputTasa.value = "0.00";
+            }
+            
+            esCargaInicial = false;
+            calcularEquivalenciaDolares();
+        } catch (error) {
+            console.error("Error obteniendo la tasa de cambio:", error);
+        }
+    }
+
+    function calcularEquivalenciaDolares() {
+        const montoBs = parseFloat(inputMontoBs.value) || 0;
+        const tasa = parseFloat(inputTasa.value) || 0;
+
+        if (montoBs > 0 && tasa > 0) {
+            const calculoUsd = montoBs / tasa;
+            inputMontoUsd.value = calculoUsd.toFixed(2);
+        } else {
+            const montoOriginalUsd = parseFloat(inputMontoCuotaOriginal.value) || 0;
+            if (montoOriginalUsd > 0 && esCargaInicial) {
+                inputMontoUsd.value = montoOriginalUsd.toFixed(2);
+            } else {
+                inputMontoUsd.value = "0.00";
+            }
+        }
+    }
+
+    inputFecha.addEventListener('change', () => {
+        consultarTasaPorFecha();
+    });
+    
+    inputMontoBs.addEventListener('input', calcularEquivalenciaDolares);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        consultarTasaPorFecha();
+        alternarFiltroMasivo();
+    });
+
+    function alternarFiltroMasivo() {
+        const selectorEstudiante = document.getElementById('id_estudiante');
+        const cajaSecciones = document.getElementById('contenedor_seccion_masiva');
+        
+        if (selectorEstudiante && cajaSecciones) {
+            if (selectorEstudiante.value === 'todos') {
+                cajaSecciones.classList.remove('hidden');
+            } else {
+                cajaSecciones.classList.add('hidden');
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ficha de Personal Docente</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #334155;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .section-title {
+            background-color: #f1f5f9;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .label {
+            font-weight: bold;
+            color: #64748b;
+            width: 30%;
+        }
+        .foto {
+            width: 120px;
+            height: 120px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">{{ colegio.nombre }}</div>
+        <div>FICHA DE DATOS - PERSONAL DOCENTE</div>
+    </div>
+
+    <table>
+        <tr>
+            <td style="border: none; vertical-align: top;">
+                <div class="section-title">DATOS PERSONALES</div>
+                <table>
+                    <tr>
+                        <td class="label">Nombres:</td>
+                        <td>{{ docente.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Apellidos:</td>
+                        <td>{{ docente.apellido }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Cédula:</td>
+                        <td>{{ docente.cedula }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Correo:</td>
+                        <td>{{ docente.usuario.email|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Teléfono:</td>
+                        <td>{{ docente.telefono|default:"N/A" }}</td>                        
+                    </tr> 
+                    <tr>  
+                        <td class="label">Dirección:</td>
+                        <td>{{ docente.direccion|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Fecha de Nacimiento:</td>
+                        <td>
+                            {% if docente.fecha_nacimiento %}
+                                {{ docente.fecha_nacimiento|date:"d \d\e F \d\e Y" }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 150px; border: none; vertical-align: top; text-align: right;">
+                {% if docente.foto %}
+                    <img src="{{ docente.foto.path }}" class="foto">
+                {% else %}
+                    <div class="foto"><br><br>SIN FOTO</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">INFORMACIÓN LABORAL</div>
+    <table>
+        <tr>
+            <td class="label">Especialidad:</td>
+            <td>{{ detalle.especialidad|default:"NO ASIGNADA" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Profesión:</td>
+            <td>{{ docente.profesion|default:"NO DEFINIDA" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha de Ingreso:</td>
+            <td>
+                {% if detalle.fecha_inicio %}
+                    {{ detalle.fecha_inicio|date:"d \d\e F \d\e Y" }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 100px; text-align: center;">
+        <div style="width: 200px; border-top: 1px solid #333; margin: 0 auto;"></div>
+        <div style="font-size: 10px; margin-top: 5px;">FIRMA DEL DOCENTE</div>
+    </div>
+</body>
+</html>

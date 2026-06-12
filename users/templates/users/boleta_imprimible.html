@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Boleta Informativa - {{ estudiante.apellido }}, {{ estudiante.nombre }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Estilos de alta precisión para impresión limpia */
+        @media print {
+            body {
+                background-color: #ffffff;
+                color: #000000;
+                font-size: 12px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                border-radius: 0px !important;
+            }
+            @page {
+                size: letter;
+                margin: 1.5cm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased">
+
+    <div class="no-print bg-slate-900 text-white py-3 px-6 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'dashboard_colegio' colegio.slug %}" class="text-slate-400 hover:text-white transition-colors">
+                <i class="fas fa-arrow-left"></i> Volver al Portal
+            </a>
+            <span class="text-slate-500">|</span>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-300">Vista previa del Documento Oficial</p>
+        </div>
+        <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs py-2 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer">
+            <i class="fas fa-print"></i> Imprimir / Guardar PDF
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto my-6 p-8 bg-white shadow-xl rounded-3xl print-card transition-all">
+        
+        <div class="flex justify-between items-center border-b-2 border-slate-900 pb-4 mb-6">
+            <div class="space-y-0.5">
+                <p class="text-[10px] font-black text-slate-500 tracking-wider uppercase">República Bolivariana de Venezuela</p>
+                <h1 class="text-lg font-black text-slate-950 uppercase leading-none">{{ colegio.nombre|default:"-" }}</h1>
+                <p class="text-xs font-semibold text-slate-500">Mérida, Venezuela.</p> 
+            </div>
+            <div class="text-right">
+                <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-[10px] font-bold uppercase text-slate-600 rounded-md">
+                    Código Plantel: OFICIAL
+                </span>
+            </div>
+        </div>
+
+        <div class="text-center my-6">
+            <h2 class="text-xl font-black text-slate-900 uppercase tracking-tight">Boleta Informativa de Rendimiento Escolar</h2> 
+            <p class="text-sm font-bold text-slate-500 mt-1">Año Escolar: {{ anio_escolar.nombre|default:"-" }}</p> 
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 border border-slate-200 rounded-2xl mb-6">
+            <div>
+                <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Estudiante</span>
+                <span class="text-sm font-black text-slate-800 uppercase">{{ estudiante.apellido }}, {{ estudiante.nombre }}</span> 
+            </div>
+            <div>
+                <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Cédula / ID</span>
+                <span class="text-sm font-bold text-slate-800">{{ estudiante.cedula|default:"-" }}</span> 
+            </div>
+            <div>
+                <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Grado y Sección</span>
+                <span class="text-sm font-bold text-slate-800">
+                    {% if inscripcion %}{{ inscripcion.seccion.grado }} - Secc. "{{ inscripcion.seccion.nombre }}"{% else %}-{% endif %} 
+                </span>
+            </div>
+            <div>
+                <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Nivel Educativo</span>
+                <span class="text-sm font-bold text-slate-800 uppercase">
+                    {{ inscripcion.seccion.grado.nivel|default:"Primaria" }} 
+                </span>
+            </div>
+        </div>
+
+        <div class="border border-slate-300 rounded-2xl overflow-hidden mb-6">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider">
+                        <th class="px-4 py-3 w-7/12 border-r border-slate-800">Asignatura / Área de Formación</th> 
+                        <th class="px-4 py-3 text-center w-1.5/12 border-r border-slate-800">1er Lapso</th> 
+                        <th class="px-4 py-3 text-center w-1.5/12 border-r border-slate-800">2do Lapso</th> 
+                        <th class="px-4 py-3 text-center w-1.5/12">3er Lapso</th> 
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-300 text-xs font-bold text-slate-700">
+                    {% for item in calificaciones %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-3 border-r border-slate-300 uppercase font-black text-slate-900">
+                            {{ item.asignatura }}
+                        </td>
+                        <td class="px-4 py-3 text-center border-r border-slate-300 font-black text-sm text-slate-800">
+                            {{ item.lapso1|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-center border-r border-slate-300 font-black text-sm text-slate-800">
+                            {{ item.lapso2|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-center font-black text-sm text-slate-800">
+                            {{ item.lapso3|default:"-" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-8">
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Escala de Estimación de Competencias</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-5 bg-slate-900 text-white text-[10px] font-black rounded flex items-center justify-center">C</span>
+                    <span class="text-slate-600"><strong>Consolidado:</strong> Alcanzó todos los objetivos.</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-5 bg-slate-200 text-slate-800 text-[10px] font-black border border-slate-300 rounded flex items-center justify-center">EP</span>
+                    <span class="text-slate-600"><strong>En Proceso:</strong> Requiere acompañamiento continuo.</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-5 bg-slate-100 text-slate-400 text-[10px] font-black border border-slate-200 rounded flex items-center justify-center">I</span>
+                    <span class="text-slate-600"><strong>Iniciado:</strong> Comenzando a desarrollar competencias.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-12 text-center pt-8 mt-12 border-t border-dashed border-slate-300">
+            <div class="flex flex-col items-center justify-end h-24">
+                <div class="w-48 border-b-2 border-slate-900 mb-1"></div>
+                <p class="text-[10px] font-black text-slate-800 uppercase">Docente de Aula</p>
+            </div>
+            <div class="flex flex-col items-center justify-end h-24">
+                <div class="w-48 border-b-2 border-slate-900 mb-1"></div>
+                <p class="text-[10px] font-black text-slate-800 uppercase">Dirección / Sello del Plantel</p>
+            </div>
+        </div>
+
+        <div class="mt-8 text-right text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            Fecha de Emisión: {% now "d/m/Y" %}
+        </div>
+    </div>
+
+    <script>
+        // Cuando toda la estructura y estilos carguen, abre la ventana de impresión/Guardado PDF de forma inmediata
+        window.addEventListener('DOMContentLoaded', () => {
+            // Un pequeño delay de 300ms asegura la correcta carga del motor de estilos de Tailwind
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        });
+    </script>
+</body>
+</html>

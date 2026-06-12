@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ficha de Personal Administrativo</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #334155;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .section-title {
+            background-color: #f1f5f9;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .label {
+            font-weight: bold;
+            color: #64748b;
+            width: 30%;
+        }
+        .foto {
+            width: 120px;
+            height: 120px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">{{ colegio.nombre }}</div>
+        <div>FICHA DE DATOS - PERSONAL ADMINISTRATIVO</div>
+    </div>
+
+    <table>
+        <tr>
+            <td style="border: none;">
+                <div class="section-title">DATOS PERSONALES</div>
+                <table>
+                    <tr>
+                        <td class="label">Nombres:</td>
+                        <td>{{ administrativo.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Apellidos:</td>
+                        <td>{{ administrativo.apellido }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Cédula:</td>
+                        <td>{{ administrativo.cedula }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Correo:</td>
+                        <td>{{ administrativo.usuario.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Teléfono:</td>
+                        <td>{{ administrativo.telefono|default:"N/A" }}</td>                         
+                    <tr>
+                        <td class="label">Dirección:</td>
+                        <td>{{ administrativo.direccion|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Fecha de Nacimiento:</td>
+                        <td>{{ administrativo.fecha_nacimiento|date:"d \d\e F \d\e Y"|default:"N/A" }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 150px; border: none; vertical-align: top; text-align: right;">
+                {% if administrativo.foto %}
+                    <img src="{{ administrativo.foto.path }}" class="foto">
+                {% else %}
+                    <div class="foto"><br><br>SIN FOTO</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">INFORMACIÓN LABORAL</div>
+    <table>
+        <tr>
+            <td class="label">Cargo Actual:</td>
+            <td>{{ detalle.cargo|default:"NO ASIGNADO" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Profesión:</td>
+            <td>{{ administrativo.profesion|default:"NO DEFINIDA" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha de Ingreso:</td>
+            <td>{{ detalle.fecha_inicio|date:"d \d\e F \d\e Y"|default:"-" }}</td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 100px; text-align: center;">
+        <div style="width: 200px; border-top: 1px solid #333; margin: 0 auto;"></div>
+        <div style="font-size: 10px; margin-top: 5px;">FIRMA DEL TRABAJADOR</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+    <div>
+        <h3 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Ficha Escolar Integral</h3>
+        {% if ano_activo %}
+            <span class="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-wider border border-blue-100">
+                <i class="fas fa-calendar-alt text-[9px]"></i> Período: {{ ano_activo.nombre }}
+            </span>
+        {% else %}
+            <span class="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500 uppercase tracking-wider">
+                <i class="fas fa-calendar-times text-[9px]"></i> Sin Período Activo
+            </span>
+        {% endif %}
+    </div>
+    <button onclick="cerrarModalFicha()" class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition shadow-sm">
+        <i class="fas fa-times text-sm"></i>
+    </button>
+</div>
+
+<div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto bg-slate-50/30">
+    
+    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden shadow-inner border border-slate-200 flex-shrink-0">
+                {% if estudiante.foto %}
+                    <img src="{{ estudiante.foto.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <i class="fas fa-user text-4xl"></i>
+                {% endif %}
+            </div>
+            <div>
+                <span class="text-[9px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-100">Estudiante Activo</span>
+                <h4 class="text-2xl font-black text-slate-800 uppercase tracking-tight mt-1 leading-tight">{{ estudiante.apellido }}, {{ estudiante.nombre }}</h4>
+                <p class="text-xs font-bold text-slate-500 flex items-center gap-1.5 mt-1">
+                    <i class="fas fa-id-card text-slate-400"></i> Cédula / ID: <span class="text-slate-800 font-black">{{ estudiante.cedula }}</span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <a href="{% url 'imprimir_ficha_estudiante' colegio.slug estudiante.id %}" target="_blank" 
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 text-white text-[10px] font-black uppercase rounded-xl hover:bg-slate-900 transition shadow-md tracking-wider">
+                <i class="fas fa-file-pdf text-xs"></i>
+                Imprimir Ficha
+            </a>
+            <a href="#" 
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-100 tracking-wider">
+                <i class="fas fa-file-invoice text-xs"></i>
+                Boleta de Notas
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-emerald-600 pb-2 border-b border-slate-100">
+                <i class="fas fa-graduation-cap text-sm"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest">Información Académica</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase">Grado o Año</span>
+                    <span class="text-xs font-black text-slate-700 uppercase block mt-0.5">
+                        {{ estudiante_detalle.seccion.grado.nombre|default:"No Asignado" }}
+                    </span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase">Sección</span>
+                    <span class="text-xs font-black text-slate-700 uppercase block mt-0.5">
+                        {{ estudiante_detalle.seccion.nombre|default:"No Asignada" }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase">Fecha de Nacimiento</span>
+                    <span class="text-xs font-bold text-slate-700 block mt-0.5">
+                        {{ estudiante.fecha_nacimiento|date:"d/m/Y"|default:"No registrada" }}
+                    </span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase">Edad Calculada</span>
+                    <span class="text-xs font-bold text-slate-700 block mt-0.5">
+                        {% if estudiante.edad != "N/A" %}{{ estudiante.edad }} Años{% else %}-{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-blue-600 pb-2 border-b border-slate-100">
+                <i class="fas fa-user-tie text-sm"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest">Información del Representante</span>
+            </div>
+
+            {% if representante %}
+                <div class="flex items-center justify-between bg-blue-50/50 px-3 py-2 rounded-xl border border-blue-100/50">
+                    <div>
+                        <span class="block text-[8px] font-black text-slate-400 uppercase">Vínculo Familiar</span>
+                        <span class="text-xs font-black text-blue-600 uppercase tracking-tighter">{{ parentesco|default:"REPRESENTANTE" }}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">Nombres y Apellidos</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase block mt-0.5">
+                            {{ representante.nombre }} {{ representante.apellido }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">Cédula de Identidad</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase block mt-0.5">
+                            {{ representante.cedula }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">Teléfono Principal</span>
+                        <span class="text-xs font-bold text-slate-700 block mt-0.5 whitespace-nowrap">
+                            <i class="fas fa-phone text-[9px] text-slate-400 mr-1"></i> {{ representante.telefono|default:"-" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] font-black text-slate-400 uppercase">Correo Electrónico</span>
+                        <span class="text-xs font-bold text-slate-600 block mt-0.5 truncate" title="{{ representante.usuario.email|default:'No registrado' }}">
+                            <i class="fas fa-envelope text-[9px] text-slate-400 mr-1"></i> {{ representante.usuario.email|default:"-" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-50">
+                    <span class="block text-[9px] font-black text-slate-400 uppercase mb-1">Dirección de Habitación (Familiar)</span>
+                    <span class="text-xs font-bold text-slate-700 uppercase block bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                        {{ representante.direccion|default:"No se encuentra registrada una dirección en el sistema." }}
+                    </span>
+                </div>
+
+            {% else %}
+                <div class="p-4 bg-amber-50 rounded-xl text-amber-700 border border-amber-100 text-[11px] font-bold flex items-center gap-2 uppercase">
+                    <i class="fas fa-exclamation-triangle text-sm"></i> 
+                    Este estudiante no tiene un representante legal vinculado.
+                </div>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>

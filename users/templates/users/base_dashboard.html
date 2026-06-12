@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - {{ colegio.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .active-link {
+            background-color: #2563eb; 
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans">
+{% if messages %}
+  {% for message in messages %}
+    <div class="p-4 mb-4 text-sm text-red-800 bg-red-50 rounded-lg">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+    <div class="flex min-h-screen">
+        <div class="w-72 bg-[#0f172a] text-slate-300 flex flex-col shadow-xl">
+            <div class="p-6 flex flex-col items-center border-b border-slate-800">
+                {% if colegio.logo %}
+                    <img src="{{ colegio.logo.url }}" alt="Logo" class="w-16 h-16 rounded-full mb-3 border-2 border-slate-700">
+                {% endif %}
+                <h2 class="text-white font-bold text-center text-xs uppercase tracking-widest leading-tight">
+                    {{ colegio.nombre }}
+                </h2>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="{% url 'dashboard_colegio' colegio.slug %}" 
+                class="flex items-center p-3 rounded-xl transition hover:bg-slate-800 {% if request.resolver_match.url_name == 'dashboard_colegio' %}active-link{% endif %}">
+                    <i class="fas fa-home mr-3 w-5"></i>
+                    <span class="font-medium">Inicio</span>
+                </a>
+                
+                {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+                    <div class="pt-4 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Contenido</div>
+                    
+                    <a href="{% url 'crear_publicacion' colegio.slug %}" class="flex items-center p-3 rounded-xl transition hover:bg-slate-800">
+                        <i class="fas fa-edit mr-3 w-5"></i>
+                        <span>Nueva Noticia</span>
+                    </a>
+
+                    <a href="{% url 'cargar_galeria' colegio.slug %}" class="flex items-center p-3 rounded-xl transition hover:bg-slate-800">
+                        <i class="fas fa-camera mr-3 w-5"></i>
+                        <span>Cargar Fotos</span>
+                    </a>
+
+                    <a href="{% url 'gestionar_contenido' colegio.slug %}" class="flex items-center p-3 rounded-xl transition hover:bg-slate-800">
+                        <i class="fas fa-cog mr-3 w-5"></i>
+                        <span>Gestionar Contenido</span>
+                    </a>
+                {% endif %}
+
+                {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+                    <div class="pt-6 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Administración</div>
+                    
+                    <div class="space-y-1">
+                        <button type="button" class="flex items-center justify-between w-full p-3 rounded-xl transition hover:bg-slate-800 text-slate-300"
+                                onclick="document.getElementById('sub-personas').classList.toggle('hidden')">
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-3 w-5 text-blue-400"></i>
+                                <span>Personas</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-[10px]"></i>
+                        </button>
+                        <div id="sub-personas" class="hidden ml-9 space-y-1 border-l border-slate-800">
+                            <a href="{% url 'gestionar_administrativos' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Administrativos</a>
+                            <a href="{% url 'gestionar_docentes' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Docentes</a>
+                            <a href="{% url 'gestionar_representantes' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Representantes</a>
+                            <a href="{% url 'gestionar_estudiantes' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Estudiantes</a>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <button type="button" class="flex items-center justify-between w-full p-3 rounded-xl transition hover:bg-slate-800 text-slate-300"
+                                onclick="document.getElementById('sub-periodo').classList.toggle('hidden')">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-week mr-3 w-5 text-blue-400"></i>
+                                <span>Gestión Académica</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-[10px]"></i>
+                        </button>
+                        <div id="sub-periodo" class="hidden ml-9 space-y-1 border-l border-slate-800">
+                            <a href="{% url 'gestionar_anio_escolar' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Configurar Año Escolar</a>
+                            <a href="{% url 'gestionar_secciones' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Gestionar Secciones</a>
+                            <a href="{% url 'gestionar_asignaturas' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Gestionar Asignaturas</a>
+                            <a href="{% url 'gestionar_estudiantes' colegio.slug %}?tab=activos&anio_escolar=1&order=apellido&per_page=10" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Gestionar Inscripción</a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+                    <div class="pt-6 pb-2 text-[10px] font-bold text-blue-500 uppercase tracking-widest px-3">Finanzas</div>
+                    
+                    <div class="space-y-1">
+                        <button type="button" class="flex items-center justify-between w-full p-3 rounded-xl transition hover:bg-slate-800 text-slate-300"
+                                onclick="document.getElementById('sub-pagos').classList.toggle('hidden')">
+                            <div class="flex items-center">
+                                <i class="fas fa-wallet mr-3 w-5 text-emerald-400"></i>
+                                <span>Gestión de Pagos</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-[10px]"></i>
+                        </button>
+                        <div id="sub-pagos" class="hidden ml-9 space-y-1 border-l border-slate-800">
+                            <a href="{% url 'gestionar_pagos' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">
+                                {% if request.user.rol.nombre == 'Representante' %}Mis Pagos / Estado de Cuenta{% else %}Gestionar Pagos General{% endif %}
+                            </a>
+                            
+                            {% if request.user.rol.can_manage_finances or request.user.is_superuser %}
+                                <a href="{% url 'panel_verificar_pagos' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-400 hover:text-white">
+                                    Conciliación Bancaria
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'tasa_cambio_historico' colegio.slug %}" class="block py-2 px-4 text-sm text-slate-500 hover:text-white">Precio del Dólar</a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+                    <div class="pt-6 pb-2 text-[10px] font-bold text-red-500 uppercase tracking-widest px-3">Seguridad</div>
+                    <a href="{% url 'gestionar_usuarios' colegio.slug %}" class="flex items-center p-3 rounded-xl transition hover:bg-slate-800">
+                        <i class="fas fa-user-shield mr-3 w-5"></i>
+                        <span>Gestor de Usuarios</span>
+                    </a>
+                    <a href="{% url 'gestionar_roles' colegio.slug %}" class="flex items-center p-3 rounded-xl transition hover:bg-slate-800">
+                        <i class="fas fa-key mr-3 w-5"></i>
+                        <span>Roles y Permisos</span>
+                    </a>
+                {% endif %}
+            
+                {% if colegio.tiene_cantina and request.user.rol.nombre == 'Cantinero' or request.user.rol.nombre == 'Super' %}
+                    <div class="pt-6 pb-2 text-[10px] font-bold text-orange-500 uppercase tracking-widest px-3 border-t border-slate-800 mt-4">Servicios</div>
+                    <a href="{% url 'dashboard_cantina' colegio.slug %}" class="flex items-center p-3 rounded-xl transition bg-orange-600/10 text-orange-500 border border-orange-600/20 hover:bg-orange-600/20">
+                        <i class="fas fa-utensils mr-3 w-5"></i>
+                        <span class="font-bold">Módulo Cantina</span>
+                    </a>
+                {% endif %}
+
+                <div class="mt-10 pt-6 border-t border-slate-800">
+                    <a href="{% url 'home_colegio' colegio.slug %}" target="_blank" class="flex items-center p-3 text-sm text-slate-500 hover:text-white transition">
+                        <i class="fas fa-eye mr-3"></i>
+                        <span>Ver Web Pública</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="flex-1 flex flex-col">
+            <header class="bg-white h-20 border-b border-slate-200 flex items-center justify-between px-10">
+                <div class="flex items-center gap-4 text-slate-400 text-sm italic">
+                    <i class="fas fa-map-marker-alt"></i> Mérida, Venezuela • {% now "j \d\e F, Y" %}
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <p class="text-sm font-black text-slate-800 uppercase tracking-tighter">
+                            Bienvenido, {{ request.user.rol.nombre|default:request.user.email }}
+                        </p>
+                        <p class="text-[10px] font-bold text-blue-600 uppercase">{{ request.user.email }}</p>
+                    </div>
+                    
+                    <form action="{% url 'logout_colegio' colegio_slug=colegio.slug %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="p-10 flex-1 overflow-y-auto">
+                {% block content_dashboard %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+</body>
+</html>
+
+<script>
+function confirmarAccionGeneral(titulo, mensaje, urlDestino) {
+    Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = urlDestino;
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}'; 
+            
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    })
+}
+</script>

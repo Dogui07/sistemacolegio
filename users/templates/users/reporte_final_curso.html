@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sábana de Rendimiento - {{ asignacion.asignatura.nombre }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                font-size: 10pt; /* Reducimos la letra un poco para sábanas de notas */
+            }
+            .print-card {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            th {
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen p-4 md:p-8">
+
+    <div class="no-print max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm gap-4">
+        <a href="{% url 'ver_curso_docente' colegio.slug asignacion.id %}" class="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+            ← Volver al Curso
+        </a>
+        <button onclick="window.print();" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition cursor-pointer">
+            🖨️ Imprimir Sábana o Guardar PDF
+        </button>
+    </div>
+
+    <div class="print-card max-w-6xl mx-auto bg-white border border-slate-200 shadow-md rounded-2xl p-6 md:p-10 space-y-6">
+        
+        <div class="flex flex-col items-center text-center border-b border-slate-200 pb-6 space-y-1.5">
+            <p class="text-xs uppercase font-bold tracking-widest text-slate-400">República Bolivariana de Venezuela</p>
+            <p class="text-xs uppercase font-bold text-slate-500">Ministerio del Poder Popular para la Educación</p>
+            <h1 class="text-xl font-black uppercase text-slate-900 tracking-tight mt-1">{{ colegio.nombre }}</h1>
+            <span class="px-4 py-1 bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-full mt-2">
+                Consolidado Final de Rendimiento Escolar (Sábana de Notas)
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-xl border border-slate-100 text-sm">
+            <div class="space-y-2">
+                <p class="text-slate-500">Área de Formación / Asignatura: <strong class="text-slate-900 uppercase font-bold">{{ asignacion.asignatura.nombre }}</strong></p>
+                <p class="text-slate-500">Grado y Sección: <strong class="text-slate-900 uppercase">{{ seccion.grado }} - Secc. "{{ seccion.nombre }}"</strong></p>
+            </div>
+            <div class="space-y-2 md:text-right">
+                <p class="text-slate-500">Nivel Educativo: <strong class="text-slate-700 font-black uppercase text-xs">{{ seccion.get_nivel_display }}</strong></p>
+                <p class="text-slate-500">Matrícula Evaluada: <strong class="text-slate-900 font-mono">{{ reporte_data|length }} Estudiantes</strong></p>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider bg-slate-100 text-[11px]">
+                        <th class="p-3 w-32">Cédula / ID</th>
+                        <th class="p-3">Apellidos y Nombres</th>
+                        <th class="p-3 text-center w-24 bg-slate-100">1er Lapso</th>
+                        <th class="p-3 text-center w-24 bg-slate-100">2do Lapso</th>
+                        <th class="p-3 text-center w-24 bg-slate-100">3er Lapso</th>
+                        {% if es_cuantitativo %}
+                            <th class="p-3 text-center w-28 bg-slate-200/80 font-black">Def. Anual</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-slate-700">
+                    {% for item in reporte_data %}
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="p-3 font-mono font-medium text-slate-500">{{ item.estudiante.cedula }}</td>
+                        
+                        <td class="p-3 font-bold text-slate-800 uppercase">{{ item.estudiante.apellido }}, {{ item.estudiante.nombre }}</td>
+                        
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.lapso1 }}
+                            {% else %}
+                                {% if item.lapso1 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}
+                                        {{ item.lapso1.descriptor|default:"--" }}
+                                    {% else %}
+                                        <span class="text-[11px] font-normal text-slate-600 block max-w-xs mx-auto text-left line-clamp-1" title="{{ item.lapso1.informe }}">
+                                            {{ item.lapso1.informe }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.lapso2 }}
+                            {% else %}
+                                {% if item.lapso2 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}
+                                        {{ item.lapso2.descriptor|default:"--" }}
+                                    {% else %}
+                                        <span class="text-[11px] font-normal text-slate-600 block max-w-xs mx-auto text-left line-clamp-1" title="{{ item.lapso2.informe }}">
+                                            {{ item.lapso2.informe }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.lapso3 }}
+                            {% else %}
+                                {% if item.lapso3 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}
+                                        {{ item.lapso3.descriptor|default:"--" }}
+                                    {% else %}
+                                        <span class="text-[11px] font-normal text-slate-600 block max-w-xs mx-auto text-left line-clamp-1" title="{{ item.lapso3.informe }}">
+                                            {{ item.lapso3.informe }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        {% if es_cuantitativo %}
+                            <td class="p-3 text-center font-black bg-slate-50/80 text-sm {% if item.final != '--' and item.final >= 10 %}text-emerald-700{% elif item.final != '--' %}text-rose-600{% endif %}">
+                                {{ item.final }}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if es_cuantitativo %}6{% else %}5{% endif %}" class="p-8 text-center text-slate-400 italic bg-slate-50">
+                            No se encuentran estudiantes registrados o con notas cargadas en este curso.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="grid grid-cols-2 gap-12 pt-12 text-center text-xs text-slate-600">
+            <div class="space-y-1">
+                <div class="w-48 border-b border-slate-400 mx-auto h-8"></div>
+                <p class="font-bold uppercase mt-2">Docente de la Materia</p>
+                <p class="text-slate-400">Firma Autorizada</p>
+            </div>
+            <div class="space-y-1">
+                <div class="w-48 border-b border-slate-400 mx-auto h-8"></div>
+                <p class="font-bold uppercase mt-2">Control de Estudios / Dirección</p>
+                <p class="text-slate-400">Sello del Plantel</p>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+            <p>Sistema de Gestión Escolar - Colegio Madre Laura</p>
+            <p>Fecha de Generación: {% now "d/m/Y H:i" %}</p>
+        </div>
+    </div>
+
+</body>
+</html>

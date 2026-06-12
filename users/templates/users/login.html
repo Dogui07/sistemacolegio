@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Administrativo - {{ colegio.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-6" 
+      style="border-top: 10px solid {{ colegio.color_principal }};">
+
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div class="p-8">
+            <div class="text-center mb-10">
+                {% if colegio.logo %}
+                    <img class="mx-auto h-28 w-auto mb-4" src="{{ colegio.logo.url }}" alt="Logo {{ colegio.nombre }}">
+                {% endif %}
+                <h2 class="text-2xl font-extrabold text-gray-900 leading-tight">
+                    Panel Administrativo
+                </h2>
+                <p class="text-gray-500 font-medium">{{ colegio.nombre }}</p>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Usuario</label>
+                    <input name="username" type="text" required 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-offset-1 focus:outline-none transition"
+                        style="--tw-ring-color: {{ colegio.color_principal }}; focus:border-color: {{ colegio.color_principal }};">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
+                    <input name="password" type="password" required 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-offset-1 focus:outline-none transition"
+                        style="--tw-ring-color: {{ colegio.color_principal }}; focus:border-color: {{ colegio.color_principal }};">
+                </div>
+
+                <button type="submit" class="w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200"
+                    style="background-color: {{ colegio.color_principal }};">
+                    Entrar al Sistema
+                </button>
+            </form>
+        </div>
+        
+        <div class="bg-gray-50 p-6 text-center border-t border-gray-100">
+            <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+                Mérida, Venezuela &copy; 2026
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

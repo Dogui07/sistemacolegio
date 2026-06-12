@@ -1,0 +1,263 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Gestión de Representantes</h1>
+        <p class="text-sm text-slate-500">Administra los representantes de</p><p> {{ colegio.nombre }}</p>
+    </div>
+    
+    {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+    <div class="flex gap-3">
+        <button type="button" onclick="abrirModalMasiva()" 
+            class="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition flex items-center" title="Carga Masiva de Representantes">
+            <i class="fas fa-file-excel mr-2"></i> Carga Masiva
+        </button>
+
+        <a href="{% url 'crear_representante' colegio.slug %}" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center" title="Registrar Nuevo Representante">
+            <i class="fas fa-plus mr-2"></i> Nuevo Representante
+        </a>
+    {% endif %}
+        <a href="{% url 'exportar_representantes_excel' colegio.slug %}" 
+        class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista">
+            <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-excel mr-2 text-emerald-600"></i> Excel
+        </a>
+        
+        <a href="{% url 'exportar_representantes_pdf' colegio.slug %}" target="_blank"
+        class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista">
+            <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-pdf mr-2 text-red-600"></i> PDF
+        </a>
+    </div>
+</div>
+
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
+    <form method="GET" class="flex flex-wrap gap-4">
+        <input type="hidden" name="estado" value="{{ request.GET.estado }}">
+        
+        <div class="relative flex-1 min-w-[300px]">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" name="q" value="{{ query }}" placeholder="Buscar..." 
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-700">
+        </div>
+
+        <select name="order" onchange="this.form.submit()" class="bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600">
+            <option value="apellido" {% if order_by == 'apellido' %}selected{% endif %}>ORDENAR POR APELLIDO</option>
+            <option value="nombre" {% if order_by == 'nombre' %}selected{% endif %}>ORDENAR POR NOMBRE</option>
+            <option value="cedula" {% if order_by == 'cedula' %}selected{% endif %}>ORDENAR POR CÉDULA</option>
+        </select>
+
+        <select name="per_page" onchange="this.form.submit()" class="bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600">
+            <option value="10" {% if per_page == '10' %}selected{% endif %}>10 REGISTROS</option>
+            <option value="25" {% if per_page == '25' %}selected{% endif %}>25 REGISTROS</option>
+            <option value="50" {% if per_page == '50' %}selected{% endif %}>50 REGISTROS</option>
+        </select>
+
+        <button type="submit" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold hover:bg-slate-900 transition">
+            Filtrar
+        </button>
+    </form>
+</div>
+
+<div class="flex gap-4 mb-6 border-b border-slate-200">
+    <a href="?estado=activo" class="pb-3 px-2 {% if not 'inactivo' in request.get_full_path %}border-b-2 border-blue-600 text-blue-600 font-bold{% else %}text-slate-400{% endif %}">
+        ACTIVOS
+    </a>
+    <a href="?estado=inactivo" class="pb-3 px-2 {% if 'inactivo' in request.get_full_path %}border-b-2 border-blue-600 text-blue-600 font-bold{% else %}text-slate-400{% endif %}">
+        INACTIVOS (PAPELERA)
+    </a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <table class="w-full text-left">
+        <thead class="bg-slate-50 border-b border-slate-100">
+            <tr>
+                <th class="px-6 py-4 text-xs uppercase font-bold text-slate-500">Cédula</th>
+                <th class="px-6 py-4 text-xs uppercase font-bold text-slate-500">Nombre</th>
+                <th class="px-6 py-4">Profesión</th>
+                <th class="px-6 py-4">Direccion</th>
+                <th class="px-6 py-4 text-xs uppercase font-bold text-slate-500 text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for representante in representantes %}
+            <tr class="hover:bg-slate-50/50 transition">
+                <td class="px-6 py-4 font-bold text-slate-700">{{ representante.cedula }}</td>
+                <td class="px-6 py-4 font-bold text-slate-800">
+                    <span>{{ representante.nombre }} {{ representante.apellido }}</span>
+                    
+                    <div class="mt-1 space-y-0.5">
+                        {% for relacion in representante.mis_estudiantes %}
+                            <div class="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1">
+                                <i class="fas fa-child text-blue-500 text-[9px]"></i> 
+                                <span>{{ relacion.estudiante.nombre }} {{ relacion.estudiante.apellido }}</span>
+                                <span class="text-[9px] text-slate-400 font-normal">({{ relacion.parentesco }})</span>
+                            </div>
+                        {% empty %}
+                            <div class="text-[10px] text-amber-600 font-bold uppercase flex items-center gap-1">
+                                <i class="fas fa-exclamation-triangle text-[9px]"></i>
+                                <span>Sin estudiantes asignados</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-slate-700">{{ representante.profesion|default:"-" }}</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                        <i class="fas fa-birthday-cake mr-1"></i> 
+                        {{ representante.edad }} AÑOS
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-slate-700">{{ representante.direccion|default:"-" }}</div>
+                    <div class="text-[10px] text-slate-400">
+                        <i class="fas fa-phone mr-1"></i>
+                        {{ representante.telefono|default:"" }}</div>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-3">
+                        {% if not representante.activo %}
+                            <a href="{% url 'reactivar_representante' colegio.slug representante.id %}" 
+                               class="bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-700 transition">
+                                <i class="fas fa-check mr-1"></i> REACTIVAR
+                            </a>
+                        {% else %}
+                            <button onclick="verFicha('{{ representante.id }}')" title="Ver Ficha"
+                                class="w-9 h-9 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-600 hover:text-white transition shadow-sm">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                            <a href="{% url 'editar_representante' colegio.slug representante.id %}" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Editar Representante">
+                                <i class="fas fa-edit text-xs"></i>
+                            </a>
+                            <a href="{% url 'eliminar_representante' colegio.slug representante.id %}" 
+                               onclick="return confirm('¿DESACTIVAR REPRESENTANTE?')"
+                               class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition" title="Desactivar Representante">
+                                <i class="fas fa-trash text-xs"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="px-6 py-10 text-center text-slate-500 italic">No hay registros en esta sección.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-6 flex items-center justify-between px-4">
+    <p class="text-sm text-slate-500 font-medium">
+        Mostrando {{ representantes.start_index }} a {{ representantes.end_index }} de {{ representantes.paginator.count }} registros
+    </p>
+    
+    <div class="flex gap-2">
+        {% if representantes.has_previous %}
+            <a href="?page={{ representantes.previous_page_number }}&q={{ query }}&order={{ order_by }}&per_page={{ per_page }}&estado={{ request.GET.estado }}" 
+               class="p-2 w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-blue-600 hover:text-white transition">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        {% endif %}
+
+        <span class="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg border border-blue-100">
+            Página {{ representantes.number }}
+        </span>
+
+        {% if representantes.has_next %}
+            <a href="?page={{ representantes.next_page_number }}&q={{ query }}&order={{ order_by }}&per_page={{ per_page }}&estado={{ request.GET.estado }}" 
+               class="p-2 w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-blue-600 hover:text-white transition">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div id="modalMasiva" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h3 class="text-xl font-black text-slate-800 tracking-tighter">CARGA MASIVA DE REPRESENTANTES</h3>
+            <button onclick="cerrarModalMasiva()" class="text-slate-400 hover:text-red-500 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-8">
+            <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100 mb-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-xs text-blue-700 font-black uppercase tracking-wider mb-1">
+                            <i class="fas fa-info-circle mr-1"></i> Formato Requerido
+                        </p>
+                        <p class="text-[10px] text-blue-600 leading-relaxed">
+                            Asegúrese de que el archivo tenga las columnas: <br>
+                            <b>CEDULA, NOMBRE, APELLIDO, EMAIL, TELEFONO, PROFESION, FECHA_NACIMIENTO</b>
+                        </p>
+                    </div>
+                    <a href="{% url 'descargar_plantilla_representantes' %}" 
+                    class="bg-white text-blue-600 px-3 py-2 rounded-xl text-[10px] font-black shadow-sm border border-blue-200 hover:bg-blue-600 hover:text-white transition flex items-center gap-2">
+                        <i class="fas fa-download"></i> PLANTILLA
+                    </a>
+                </div>
+            </div>
+
+            <form action="{% url 'cargar_masiva_representantes' colegio.slug %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="relative group mb-6">
+                    <div class="border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center group-hover:border-blue-400 transition-colors bg-slate-50">
+                        <input type="file" name="archivo_excel" id="excel_input" class="hidden" accept=".xlsx, .xls" required>
+                        <label for="excel_input" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3 group-hover:text-blue-500 transition-colors"></i>
+                            <p class="text-sm text-slate-600 font-bold">Selecciona tu archivo .xlsx</p>
+                            <p id="nombre_archivo" class="text-xs text-blue-600 font-bold mt-2"></p>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black shadow-lg hover:bg-slate-900 transition flex items-center justify-center tracking-widest uppercase text-sm">
+                    <i class="fas fa-file-import mr-2"></i> PROCESAR AHORA
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="modalFicha" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div id="modalFichaContent" class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200">
+    </div>
+</div>
+
+<script>
+    function abrirModalMasiva() {
+        document.getElementById('modalMasiva').classList.remove('hidden');
+    }
+
+    function cerrarModalMasiva() {
+        document.getElementById('modalMasiva').classList.add('hidden');
+    }
+
+    function verFicha(id) {
+        const modal = document.getElementById('modalFicha');
+        const content = document.getElementById('modalFichaContent');
+        
+        // Cargamos el contenido dinámicamente
+        fetch(`/colegio/{{ colegio.slug }}/representantes/${id}/ficha-modal/`)
+            .then(response => response.text())
+            .then(html => {
+                content.innerHTML = html;
+                modal.classList.remove('hidden');
+            });
+    }
+
+    function cerrarModalFicha() {
+        document.getElementById('modalFicha').classList.add('hidden');
+    }
+
+    // Mostrar nombre del archivo seleccionado 
+    document.getElementById('excel_input').onchange = function() {
+        if(this.files.length > 0) {
+            document.getElementById('nombre_archivo').textContent = "Archivo: " + this.files[0].name;
+        }
+    };
+</script>
+
+{% endblock %}

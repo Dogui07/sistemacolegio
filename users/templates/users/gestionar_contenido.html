@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión - {{ colegio.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex">
+    <div class="w-64 bg-slate-900 text-white p-6 min-h-screen">
+        <img src="{{ colegio.logo.url }}" class="h-16 mx-auto mb-6">
+        <nav class="space-y-4">
+            <a href="{% url 'dashboard_colegio' colegio.slug %}" class="block py-2 px-4 hover:bg-slate-800 rounded-lg">🏠 Dashboard</a>
+        </nav>
+    </div>
+
+    <main class="flex-1 p-10">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Gestión de Contenido</h1>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-10">
+            <div class="p-6 border-b font-bold text-lg text-gray-700 bg-gray-50">📰 Todas las Noticias</div>
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+                    <tr>
+                        <th class="px-6 py-4">Título</th>
+                        <th class="px-6 py-4">Fecha</th>
+                        <th class="px-6 py-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for pub in publicaciones %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium">{{ pub.titulo }}</td>
+                        <td class="px-6 py-4 text-sm">{{ pub.fecha_creacion|date:"d/m/Y" }}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <a href="{% url 'editar_publicacion' colegio.slug pub.id %}" class="text-blue-600 hover:underline text-sm font-bold">Editar</a>
+                            <a href="{% url 'eliminar_publicacion' colegio.slug pub.id %}" 
+                               onclick="return confirm('¿Seguro que quieres borrar esta noticia?')"
+                               class="text-red-600 hover:underline text-sm font-bold">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">📸 Gestionar Galería</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {% for foto in imagenes %}
+                <div class="group relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <img src="{{ foto.imagen.url }}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <a href="{% url 'eliminar_imagen' colegio.slug foto.id %}" 
+                           onclick="return confirm('¿Eliminar esta imagen permanentemente?')"
+                           class="bg-red-600 text-white p-2 rounded-full hover:scale-110 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

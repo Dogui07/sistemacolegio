@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Secciones - {{ colegio.nombre }}</title>
+    <style>
+        /* Configuración de la página en xhtml2pdf */
+        @page {
+            size: letter;
+            margin: 1.5cm;
+        }
+        
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1f2937;
+            font-size: 11px;
+        }
+        
+        /* Estructura del Encabezado con Tabla Invisible */
+        .tabla-header {
+            width: 100%;
+            margin-bottom: 20px;
+            border: none;
+        }
+        .td-logo {
+            width: 15%;
+            vertical-align: middle;
+            text-align: left;
+        }
+        .td-texto-institucional {
+            width: 85%;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        /* Textos del Encabezado */
+        .republica {
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        .colegio-titulo {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 4px;
+            /* Usamos dinámicamente el color principal del colegio para su nombre */
+            color: {{ colegio.color_principal }}; 
+        }
+        .lema-colegio {
+            font-size: 9px;
+            font-style: italic;
+            margin-top: 2px;
+            color: #4b5563;
+        }
+        
+        /* Datos de la Sección */
+        .info-seccion {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-bottom: 2px solid {{ colegio.color_secundario }}; /* Línea decorativa color secundario */
+            padding-bottom: 4px;
+        }
+        
+        /* Estilos de la Tabla de Estudiantes */
+        table.tabla-datos {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.tabla-datos th {
+            /* El fondo del encabezado de la tabla cambia según el color del colegio */
+            background-color: {{ colegio.color_principal }}; 
+            color: #ffffff;
+            font-weight: bold;
+            text-align: left;
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 10px;
+        }
+        table.tabla-datos td {
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 10px;
+        }
+        
+        .text-center { text-align: center; }
+        .col-nro { width: 8%; }
+        .col-cedula { width: 25%; }
+        
+        /* Salto de página para separar secciones */
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+
+    {% for seccion in secciones %}
+        
+        <table class="tabla-header">
+            <tr>
+                <td class="td-logo">
+                    {% if colegio.logo %}
+                        <img src="{{ colegio.logo.path }}" width="65" height="65">
+                    {% endif %}
+                </td>
+                <td class="td-texto-institucional">
+                    <div class="republica">REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
+                    <div class="republica">MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
+                    <div class="colegio-titulo">{{ colegio.nombre|upper }}</div>
+                    {% if colegio.lema %}
+                        <div class="lema-colegio">"{{ colegio.lema }}"</div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <div class="info-seccion">
+            CONTROL DE ESTUDIANTES - {{ seccion.nivel|upper }} - {{ seccion.grado|upper }} - SECCIÓN: {{ seccion.nombre|upper }}
+        </div>
+
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th class="text-center col-nro">Nro</th>
+                    <th>APELLIDOS</th>
+                    <th>NOMBRES</th>
+                    <th class="col-cedula">CÉDULA DE IDENTIDAD</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for estudiante in seccion.listado_estudiantes %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter|stringformat:"02d" }}</td>
+                        <td>{{ estudiante.apellido|upper }}</td>
+                        <td>{{ estudiante.nombre|upper }}</td>
+                        <td>{{ estudiante.cedula }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center" style="color: #6b7280;">
+                            No hay estudiantes registrados en esta sección para el período seleccionado.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not forloop.last %}
+            <div class="page-break"></div>
+        {% endif %}
+        
+    {% endfor %}
+
+</body>
+</html>

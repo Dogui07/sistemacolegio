@@ -1,0 +1,489 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h1 class="text-3xl font-black text-slate-800">Gestión de Secciones</h1>
+        <p class="text-slate-500">Configura los grados académicos de la institución y asigna sus respectivos docentes guía.</p>
+    </div>
+    <button type="button" onclick="abrirModalCrear()" class="bg-slate-800 text-white font-bold px-5 py-3 rounded-xl shadow-md hover:bg-slate-900 transition text-xs uppercase flex items-center gap-2 tracking-wide">
+        <i class="fas fa-plus-circle text-sm"></i> Nueva Sección
+    </button>
+</div>
+
+<div class="mb-6 bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+    <div class="flex items-center gap-3 w-full">
+        <div class="bg-blue-50 text-blue-600 p-2.5 rounded-2xl flex-shrink-0">
+            <i class="fas fa-filter text-lg"></i>
+        </div>
+        <div>
+            <span class="text-xs font-bold uppercase text-slate-400 block">Filtros Activos</span>
+            <span class="text-xs font-black text-slate-700 uppercase">
+                {% if anio_seleccionado %}{{ anio_seleccionado.nombre }}{% else %}S/P{% endif %} 
+                • {% if nivel_seleccionado == 'TODOS' %}Todos los Niveles{% else %}{{ nivel_seleccionado }}{% endif %}
+                • {% if grado_seleccionado == 'TODOS' %}Todos los Grados{% else %}{{ grado_seleccionado }}{% endif %}
+                • {% if seccion_seleccionada == 'TODOS' %}Todas las Secciones{% else %}Sec: {{ seccion_seleccionada }}{% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <form method="GET" action="" class="flex flex-wrap items-center gap-4 w-full pt-3 border-t border-slate-100">
+        <div class="flex items-center gap-2">
+            <label class="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap hidden lg:inline">Año:</label>
+            <select name="periodo" onchange="this.form.submit()" 
+                class="p-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-xs uppercase cursor-pointer">
+                {% for anio in anios_escolares %}
+                    <option value="{{ anio.id }}" {% if anio.id == anio_seleccionado.id %}selected{% endif %}>
+                        {{ anio.nombre }} {% if anio.activo %}(Activo){% endif %}
+                    </option>
+                {% empty %}
+                    <option value="">No hay periodos</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap hidden lg:inline">Nivel:</label>
+            <select name="nivel" onchange="this.form.submit()" 
+                class="p-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-xs uppercase cursor-pointer">
+                <option value="TODOS" {% if nivel_seleccionado == 'TODOS' %}selected{% endif %}>-- Todos los Niveles --</option>
+                {% for val, label in niveles_opciones %}
+                    <option value="{{ val }}" {% if nivel_seleccionado == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap hidden lg:inline">Grado:</label>
+            <select name="grado" onchange="this.form.submit()" 
+                class="p-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-xs uppercase cursor-pointer">
+                <option value="TODOS" {% if grado_seleccionado == 'TODOS' %}selected{% endif %}>-- Todos los Grados --</option>
+                <option value="Preescolar" {% if grado_seleccionado == 'Preescolar' %}selected{% endif %}>Preescolar</option>
+                <option value="1ro" {% if grado_seleccionado == '1ro' %}selected{% endif %}>1ro</option>
+                <option value="2do" {% if grado_seleccionado == '2do' %}selected{% endif %}>2do</option>
+                <option value="3ro" {% if grado_seleccionado == '3ro' %}selected{% endif %}>3ro</option>
+                <option value="4to" {% if grado_seleccionado == '4to' %}selected{% endif %}>4to</option>
+                <option value="5to" {% if grado_seleccionado == '5to' %}selected{% endif %}>5to</option>
+                <option value="6to" {% if grado_seleccionado == '6to' %}selected{% endif %}>6to</option>
+                <option value="1er Año" {% if grado_seleccionado == '1er Año' %}selected{% endif %}>1er Año</option>
+                <option value="2do Año" {% if grado_seleccionado == '2do Año' %}selected{% endif %}>2do Año</option>
+                <option value="3er Año" {% if grado_seleccionado == '3er Año' %}selected{% endif %}>3er Año</option>
+                <option value="4to Año" {% if grado_seleccionado == '4to Año' %}selected{% endif %}>4to Año</option>
+                <option value="5to Año" {% if grado_seleccionado == '5to Año' %}selected{% endif %}>5to Año</option>
+                <option value="6to Año" {% if grado_seleccionado == '6to Año' %}selected{% endif %}>6to Año</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap hidden lg:inline">Sección:</label>
+            <select name="seccion" onchange="this.form.submit()" 
+                class="p-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-xs uppercase cursor-pointer">
+                <option value="TODOS" {% if seccion_seleccionada == 'TODOS' %}selected{% endif %}>-- Todas --</option>
+                <option value="A" {% if seccion_seleccionada == 'A' %}selected{% endif %}>A</option>
+                <option value="B" {% if seccion_seleccionada == 'B' %}selected{% endif %}>B</option>
+                <option value="C" {% if seccion_seleccionada == 'C' %}selected{% endif %}>C</option>
+                <option value="D" {% if seccion_seleccionada == 'D' %}selected{% endif %}>D</option>
+                <option value="E" {% if seccion_seleccionada == 'E' %}selected{% endif %}>E</option>
+                <option value="F" {% if seccion_seleccionada == 'F' %}selected{% endif %}>F</option>
+                <option value="G" {% if seccion_seleccionada == 'G' %}selected{% endif %}>G</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
+    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+            <i class="fas fa-layer-group text-slate-500"></i> Secciones Configuradas
+        </h2>
+        
+        <a href="{% url 'imprimir_listados_pdf' colegio_slug=colegio.slug %}?periodo={{ anio_seleccionado.id }}&nivel={{ nivel_seleccionado }}&grado={{ grado_seleccionado }}&seccion={{ seccion_seleccionada }}" target="_blank" class="inline-flex items-center gap-x-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors duration-200">
+            <svg class="-ml-0.5 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 1.144c.059.297-.137.583-.438.64a23.931 23.931 0 0 1-10.884 0c-.301-.057-.497-.343-.438-.64L6.34 18m11.32 0H6.34M19.5 12h.008v.008H19.5V12Zm-1.5-4v1.5a.75.75 0 0 1-1.5 0V8h-9v1.5a.75.75 0 0 1-1.5 0V8a2.25 2.25 0 0 1 2.25-2.25h9A2.25 2.25 0 0 1 18 8ZM5.25 9.75A2.25 2.25 0 0 0 3 12v4.5A2.25 2.25 0 0 0 5.25 18.75h.39l.487-2.438A2.25 2.25 0 0 1 8.35 14.5h7.3a2.25 2.25 0 0 1 2.222 1.812l.487 2.438h.39A2.25 2.25 0 0 0 21 16.5V12a2.25 2.25 0 0 0-2.25-2.25H5.25Z" />
+            </svg>
+            IMPRIMIR LISTADOS PDF
+        </a>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                    <th class="px-6 py-4">Grado / Sección</th>
+                    <th class="px-6 py-4">Nivel Educativo</th>
+                    <th class="px-6 py-4 text-center">Capacidad Max.</th>
+                    <th class="px-6 py-4 text-center">Formato Evaluación</th>
+                    <th class="px-6 py-4">Docente Guía</th>
+                    <th class="px-6 py-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for seccion in secciones %}
+                    <tr class="hover:bg-slate-50/70 transition">
+                        <td class="px-6 py-4 font-black text-slate-800 uppercase">
+                            {{ seccion.grado }} - Sección "{{ seccion.nombre }}"
+                        </td>
+                        <td class="px-6 py-4 text-xs font-bold">
+                            <span class="px-2.5 py-1 rounded-full uppercase text-[9px] font-black
+                                {% if seccion.nivel == 'INICIAL' %} bg-purple-100 text-purple-700
+                                {% elif seccion.nivel == 'PRIMARIA' %} bg-emerald-100 text-emerald-700
+                                {% else %} bg-blue-100 text-blue-700 {% endif %}">
+                                {{ seccion.get_nivel_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-600 text-xs">
+                            <div class="text-sm font-black text-slate-700">
+                                {{ seccion.total_inscritos|default:"0" }}<span class="text-slate-400 font-medium">/{{ seccion.capacidad }}</span>
+                            </div>
+                            {% if seccion.total_inscritos >= seccion.capacidad %}
+                                <span class="inline-block text-[9px] font-extrabold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md mt-0.5 uppercase tracking-wider">Lleno</span>
+                            {% else %}
+                                <span class="block text-[10px] text-slate-400 font-medium mt-0.5">Estudiantes</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center text-xs">
+                            {% if seccion.es_cuantitativo %}
+                                <span class="bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Numérica (1-20)</span>
+                            {% else %}
+                                <span class="bg-teal-100 text-teal-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Cualitativa (A-C)</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs font-medium text-slate-600">
+                            {% if seccion.docente_guia %}
+                                <i class="fas fa-user text-slate-400 mr-1"></i> {{ seccion.docente_guia.nombre }} {{ seccion.docente_guia.apellido }}
+                            {% else %}
+                                <span class="text-slate-400 italic font-normal text-xs">No Asignado</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'asignar_docentes_seccion' colegio_slug=colegio.slug seccion_id=seccion.id %}" 
+                                    class="p-2 bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg text-xs transition shadow-sm" 
+                                    title="Asignar Docentes a Materias">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                </a>
+                                <a href="{% url 'ver_calificaciones_seccion' colegio_slug=colegio.slug seccion_id=seccion.id %}" 
+                                class="p-2 bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg text-xs transition shadow-sm" 
+                                title="Ver Calificaciones y Boletas">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </a>
+                                <button type="button" 
+                                    onclick="abrirModalEditar('{{ seccion.id }}', '{{ seccion.nivel }}', '{{ seccion.grado }}', '{{ seccion.nombre }}', '{{ seccion.capacidad }}', '{{ seccion.es_cuantitativo|yesno:'true,false' }}', '{{ seccion.docente_guia.id|default:'' }}')"
+                                    class="p-2 bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-xs transition shadow-sm" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                
+                                <button type="button" 
+                                    onclick="abrirModalEliminar('{{ seccion.id }}', '{{ seccion.grado }} - Sección {{ seccion.nombre }}')"
+                                    class="p-2 bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs transition shadow-sm" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold uppercase text-xs tracking-wider">
+                            No se encontraron secciones para los criterios seleccionados.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalCrearSeccion" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all animate-fade-in">
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modalCrearCuerpo">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h3 class="text-base font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> Nueva Sección
+            </h3>
+            <button type="button" onclick="cerrarModalCrear()" class="text-slate-400 hover:text-slate-600 transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <form method="POST" action="" class="p-6 space-y-4">
+            {% csrf_token %}
+            
+            <p class="text-[11px] text-blue-600 font-black uppercase tracking-wide mb-2">
+                Asignada al periodo: {% if anio_seleccionado %}{{ anio_seleccionado.nombre }}{% else %}N/A{% endif %}
+            </p>
+            
+            {% if anio_seleccionado %}
+                <input type="hidden" name="anio_escolar_id" value="{{ anio_seleccionado.id }}">
+            {% endif %}
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nivel Educativo</label>
+                <select name="nivel" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                    <option value="INICIAL">Inicial</option>
+                    <option value="PRIMARIA">Primaria</option>
+                    <option value="MEDIA_GENERAL">Media General</option>
+                    <option value="MEDIA_TECNICA">Media Técnica</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Grado / Año</label>
+                    <select name="grado" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                        <option value="Preescolar">Preescolar</option>
+                        <option value="1ro">1ro</option>
+                        <option value="2do">2do</option>
+                        <option value="3ro">3ro</option>
+                        <option value="4to">4to</option>
+                        <option value="5to">5to</option>
+                        <option value="6to">6to</option>
+                        <option value="1er Año">1er Año</option>
+                        <option value="2do Año">2do Año</option>
+                        <option value="3er Año">3er Año</option>
+                        <option value="4to Año">4to Año</option>
+                        <option value="5to Año">5to Año</option>
+                        <option value="6to Año">6to Año</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Sección (Letra)</label>
+                    <select name="nombre" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                    </select>
+                </div>                
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 items-end">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Capacidad Máx.</label>
+                    <input type="number" name="capacidad" value="35" min="1" required
+                        class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700">
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-center h-[48px]">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" name="es_cuantitativo" class="w-4 h-4 text-blue-600 bg-white border-slate-200 rounded focus:ring-blue-500">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">¿Nota Numérica?</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Docente Guía</label>
+                <select name="docente_guia" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                    <option value="">-- Seleccionar Docente (Opcional) --</option>
+                    {% for docente in docentes %}
+                        <option value="{{ docente.id }}">{{ docente.nombre }} {{ docente.apellido }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" onclick="cerrarModalCrear()" class="w-1/2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-3 rounded-xl text-xs uppercase transition">
+                    Cancelar
+                </button>
+                <button type="submit" {% if not anio_seleccionado %}disabled{% endif %} class="w-1/2 bg-slate-800 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-900 transition text-xs uppercase">
+                    Aperturar Sección
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalEditarSeccion" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all animate-fade-in">
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modalEditarCuerpo">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h3 class="text-base font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <i class="fas fa-edit text-blue-500"></i> Modificar Sección
+            </h3>
+            <button type="button" onclick="cerrarModalEditar()" class="text-slate-400 hover:text-slate-600 transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <form id="formEditarSeccion" method="POST" class="p-6 space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nivel Educativo</label>
+                <select name="nivel" id="edit_nivel" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                    <option value="INICIAL">Inicial</option>
+                    <option value="PRIMARIA">Primaria</option>
+                    <option value="MEDIA_GENERAL">Media General</option>
+                    <option value="MEDIA_TECNICA">Media Técnica</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Grado / Año</label>
+                    <select name="grado" id="edit_grado" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                        <option value="Preescolar">Preescolar</option>
+                        <option value="1ro">1ro</option>
+                        <option value="2do">2do</option>
+                        <option value="3ro">3ro</option>
+                        <option value="4to">4to</option>
+                        <option value="5to">5to</option>
+                        <option value="6to">6to</option>
+                        <option value="1er Año">1er Año</option>
+                        <option value="2do Año">2do Año</option>
+                        <option value="3er Año">3er Año</option>
+                        <option value="4to Año">4to Año</option>
+                        <option value="5to Año">5to Año</option>
+                        <option value="6to Año">6to Año</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Sección (Letra)</label>
+                    <select name="nombre" id="edit_nombre" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                    </select>
+                </div>                
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 items-end">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Capacidad Máx.</label>
+                    <input type="number" name="capacidad" id="edit_capacidad" min="1" required
+                        class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700">
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-center h-[48px]">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" name="es_cuantitativo" id="edit_es_cuantitativo" class="w-4 h-4 text-blue-600 bg-white border-slate-200 rounded focus:ring-blue-500">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">¿Nota Numérica?</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Docente Guía</label>
+                <select name="docente_guia" id="edit_docente_guia" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 text-sm">
+                    <option value="">-- Seleccionar Docente (Opcional) --</option>
+                    {% for docente in docentes %}
+                        <option value="{{ docente.id }}">{{ docente.nombre }} {{ docente.apellido }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" onclick="cerrarModalEditar()" class="w-1/2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-3 rounded-xl text-xs uppercase transition">
+                    Cancelar
+                </button>
+                <button type="submit" class="w-1/2 bg-slate-800 text-white hover:bg-slate-900 font-bold py-3 rounded-xl shadow-md text-xs uppercase transition">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalEliminarSeccion" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-sm overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modalEliminarCuerpo">
+        <div class="p-6 text-center space-y-4">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-slate-800 uppercase">¿Eliminar Sección?</h3>
+                <p class="text-xs text-slate-500 mt-1">Estás a punto de borrar permanentemente la sección: <br><span id="textoSeccionEliminar" class="font-black text-slate-700 uppercase"></span>.</p>
+                <p class="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-xl border border-amber-100 font-bold uppercase mt-3">
+                    El sistema bloqueará la acción automáticamente si esta posee estudiantes.
+                </p>
+            </div>
+            
+            <form id="formEliminarSeccion" method="POST" class="flex items-center gap-3 pt-2">
+                {% csrf_token %}
+                <button type="button" onclick="cerrarModalEliminar()" class="w-1/2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-3 rounded-xl text-xs uppercase transition">
+                    Volver Atrás
+                </button>
+                <button type="submit" class="w-1/2 bg-red-600 text-white hover:bg-red-700 font-bold py-3 rounded-xl shadow-md text-xs uppercase transition">
+                    Sí, Eliminar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Controladores del Modal de Registro (Creación)
+    function abrirModalCrear() {
+        const modal = document.getElementById('modalCrearSeccion');
+        const cuerpo = document.getElementById('modalCrearCuerpo');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            cuerpo.classList.remove('scale-95', 'opacity-0');
+            cuerpo.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function cerrarModalCrear() {
+        const modal = document.getElementById('modalCrearSeccion');
+        const cuerpo = document.getElementById('modalCrearCuerpo');
+        cuerpo.classList.remove('scale-100', 'opacity-100');
+        cuerpo.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // Controladores de Edición
+    function abrirModalEditar(id, nivel, grado, nombre, capacidad, esCuantitativo, docenteId) {
+        const modal = document.getElementById('modalEditarSeccion');
+        const cuerpo = document.getElementById('modalEditarCuerpo');
+        
+        document.getElementById('formEditarSeccion').action = `/${ '{{ colegio.slug }}' }/secciones/${id}/editar/`;
+        
+        document.getElementById('edit_nivel').value = nivel;
+        document.getElementById('edit_grado').value = grado;
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_capacidad').value = capacidad;
+        document.getElementById('edit_es_cuantitativo').checked = (esCuantitativo === 'true');
+        document.getElementById('edit_docente_guia').value = docenteId;
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            cuerpo.classList.remove('scale-95', 'opacity-0');
+            cuerpo.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function cerrarModalEditar() {
+        const modal = document.getElementById('modalEditarSeccion');
+        const cuerpo = document.getElementById('modalEditarCuerpo');
+        cuerpo.classList.remove('scale-100', 'opacity-100');
+        cuerpo.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // Controladores de Eliminación
+    function abrirModalEliminar(id, identificadorTexto) {
+        const modal = document.getElementById('modalEliminarSeccion');
+        const cuerpo = document.getElementById('modalEliminarCuerpo');
+        
+        document.getElementById('formEliminarSeccion').action = `/${ '{{ colegio.slug }}' }/secciones/${id}/eliminar/`;
+        document.getElementById('textoSeccionEliminar').innerText = identificadorTexto;
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            cuerpo.classList.remove('scale-95', 'opacity-0');
+            cuerpo.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function cerrarModalEliminar() {
+        const modal = document.getElementById('modalEliminarSeccion');
+        const cuerpo = document.getElementById('modalEliminarCuerpo');
+        cuerpo.classList.remove('scale-100', 'opacity-100');
+        cuerpo.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+</script>
+{% endblock %}

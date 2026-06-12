@@ -1,0 +1,277 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Gestión de DOCENTES</h1>
+        <p class="text-sm text-slate-500">Administra el personal docente de</p><p> {{ colegio.nombre }}</p>
+    </div>
+    
+    {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+    <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+        <button type="button" onclick="abrirModalMasiva()" 
+            class="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition flex items-center" title="Carga Masiva de Docentes">
+            <i class="fas fa-file-excel mr-2"></i> Carga Masiva
+        </button>
+
+        <a href="{% url 'crear_docente' colegio.slug %}" 
+            class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition" title="Registrar Nuevo Docente">
+            <i class="fas fa-plus mr-2"></i> Nuevo Docente
+        </a>
+
+        <a href="{% url 'exportar_docentes_xls' colegio.slug %}?estado={{ estado_actual }}&q={{ query|default:'' }}&orden={{ orden_actual }}" 
+          class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista">
+            <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-excel mr-2 text-emerald-600"></i> Excel
+        </a>
+
+        <a href="{% url 'exportar_docentes_pdf' colegio.slug %}?estado={{ estado_actual }}&q={{ query|default:'' }}&orden={{ orden_actual }}" 
+           target="_blank"
+           class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista">
+            <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-pdf mr-2 text-red-600"></i> PDF
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
+    <form method="GET" class="flex flex-col md:flex-row gap-4 items-center">
+        <input type="hidden" name="estado" value="{{ estado_actual }}">
+
+        <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Buscar por nombre, apellido, cédula o cargo..." 
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-700 text-xs font-bold uppercase placeholder:normal-case">
+        </div>
+
+        <div class="w-full md:w-auto">
+            <select name="orden" class="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-slate-700 text-xs font-black uppercase focus:ring-2 focus:ring-blue-500">
+                <option value="apellido" {% if orden_actual == 'apellido' %}selected{% endif %}>Ordenar por Apellido</option>
+                <option value="nombre" {% if orden_actual == 'nombre' %}selected{% endif %}>Ordenar por Nombre</option>
+                <option value="cedula" {% if orden_actual == 'cedula' %}selected{% endif %}>Ordenar por Cédula</option>
+                <option value="cargo" {% if orden_actual == 'cargo' %}selected{% endif %}>Ordenar por Cargo</option>
+            </select>
+        </div>
+
+        <div class="w-full md:w-auto">
+            <select name="registros" class="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-slate-700 text-xs font-black uppercase focus:ring-2 focus:ring-blue-500">
+                <option value="5" {% if registros_actual == '5' %}selected{% endif %}>5 Registros</option>
+                <option value="10" {% if registros_actual == '10' %}selected{% endif %}>10 Registros</option>
+                <option value="25" {% if registros_actual == '25' %}selected{% endif %}>25 Registros</option>
+                <option value="50" {% if registros_actual == '50' %}selected{% endif %}>50 Registros</option>
+            </select>
+        </div>
+
+        <button type="submit" class="w-full md:w-auto bg-slate-800 text-white px-8 py-3 rounded-xl font-black hover:bg-slate-900 transition text-xs uppercase tracking-widest shadow-sm">
+            Filtrar
+        </button>
+    </form>
+</div>
+
+<div class="flex gap-4 mb-6 border-b border-slate-200">
+    <a href="?estado=activo&q={{ query }}&orden={{ orden_actual }}&registros={{ registros_actual }}" 
+       class="pb-3 px-2 text-xs font-black tracking-widest {% if estado_actual == 'activo' %}border-b-2 border-blue-600 text-blue-600{% else %}text-slate-400 hover:text-slate-600{% endif %}">
+        ACTIVOS
+    </a>
+    <a href="?estado=inactivo&q={{ query }}&orden={{ orden_actual }}&registros={{ registros_actual }}" 
+       class="pb-3 px-2 text-xs font-black tracking-widest {% if estado_actual == 'inactivo' %}border-b-2 border-blue-600 text-blue-600{% else %}text-slate-400 hover:text-slate-600{% endif %}">
+        INACTIVOS (PAPELERA)
+    </a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
+                <th class="px-6 py-4">Foto</th>
+                <th class="px-6 py-4">Cédula</th>
+                <th class="px-6 py-4">Docente</th>
+                <th class="px-6 py-4">Cargo/especialidad</th>
+                <th class="px-6 py-4">Profesión</th>
+                <th class="px-6 py-4">Fecha Inicio</th>
+                <th class="px-6 py-4 text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+            {% for docente in docentes %}
+            <tr class="hover:bg-slate-50/50 transition-colors group">
+                <td class="px-6 py-4">
+                    <div class="relative w-12 h-12">
+                        {% if docente.foto %}
+                            <img src="{{ docente.foto.url }}" class="w-full h-full rounded-full object-cover border-2 border-white shadow-sm">
+                        {% else %}
+                            <div class="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-black text-xs uppercase">
+                                {{ docente.nombre|slice:":1" }}{{ docente.apellido|slice:":1" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="px-6 py-4 font-bold text-slate-600 font-mono text-xs">{{ docente.cedula }}</td>
+                <td class="px-6 py-4">
+                    <div class="font-black text-slate-800 uppercase text-xs tracking-tight">{{ docente.nombre }} {{ docente.apellido }}</div>
+                    <div class="text-[10px] text-slate-400 font-semibold italic mt-0.5">{{ docente.usuario.email }}</div>
+                </td>
+                <td class="px-6 py-4 text-xs font-black text-blue-600 uppercase">
+                    {{ docente.detalle_docente.especialidad|default:"SIN ASIGNAR" }}
+                </td>
+                <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
+                    {{ docente.profesion|default:"-" }}
+                </td>
+                <td class="px-6 py-4 text-xs font-bold text-slate-500 font-mono">
+                    {{ docente.detalle_docente.fecha_inicio|date:"d/m/Y"|default:"-" }}
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <div class="flex justify-center items-center space-x-3"> 
+                        {% if request.user.rol.can_manage_staff %}
+                        <form id="form-foto-{{ docente.id }}" action="{% url 'subir_foto_persona' colegio.slug docente.id %}" 
+                            method="POST" enctype="multipart/form-data" class="hidden">
+                            {% csrf_token %}
+                            <input type="file" name="foto" id="input-foto-{{ docente.id }}" onchange="document.getElementById('form-foto-{{ docente.id }}').submit()">
+                        </form>
+
+                        <button type="button" onclick="document.getElementById('input-foto-{{ docente.id }}').click()" 
+                                class="text-indigo-500 hover:text-indigo-700 transition" title="Subir Foto">
+                            <i class="fas fa-camera text-base"></i>
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'imprimir_ficha_docente' colegio.slug docente.id %}" class="text-blue-500 hover:text-blue-700 transition" 
+                        target="_blank" title="Ver Ficha Completa">
+                            <i class="fas fa-eye text-base"></i>
+                        </a>
+
+                        {% if request.user.rol.can_manage_staff %}
+                            <a href="{% url 'editar_docente' colegio.slug docente.id %}" 
+                            class="text-amber-500 hover:text-amber-700 transition" title="Modificar Datos">
+                                <i class="fas fa-edit text-base"></i>
+                            </a>
+
+                            {% if estado_actual == 'activo' %}
+                                <button type="button" 
+                                        onclick="confirmarAccionGeneral(
+                                            '¿Desactivar docente?', 
+                                            'El registro se moverá a la papelera.', 
+                                            '{% url 'eliminar_docente' colegio.slug docente.id %}'
+                                        )"
+                                        class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition" 
+                                        title="Desactivar">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            {% else %}
+                                <button type="button" 
+                                        onclick="confirmarAccionGeneral(
+                                            '¿Reactivar docente?', 
+                                            'El registro volverá a la lista de activos.', 
+                                            '{% url 'reactivar_docente' colegio.slug docente.id %}'
+                                        )"
+                                        class="w-8 h-8 rounded-xl bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-600 hover:text-white transition" 
+                                        title="Reactivar">
+                                    <i class="fas fa-undo-alt text-xs"></i>
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
+                    <i class="fas fa-folder-open text-2xl mb-2 block text-slate-300"></i> No se encontraron registros de personal docente.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if docentes.has_other_pages %}
+    <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">
+            Mostrando página {{ docentes.number }} de {{ docentes.paginator.num_pages }}
+        </div>
+        <div class="flex items-center gap-1.5">
+            {% if docentes.has_previous %}
+                <a href="?page={{ docentes.previous_page_number }}&estado={{ estado_actual }}&q={{ query }}&orden={{ orden_actual }}&registros={{ registros_actual }}" 
+                   class="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-[11px] font-black uppercase rounded-xl transition border border-slate-200 shadow-sm flex items-center gap-1">
+                    <i class="fas fa-chevron-left text-[9px]"></i> Anterior
+                </a>
+            {% endif %}
+
+            {% for num in docentes.paginator.page_range %}
+                {% if docentes.number == num %}
+                    <span class="px-3 py-2 bg-blue-600 text-white text-[11px] font-black rounded-xl border border-blue-600 shadow-sm">{{ num }}</span>
+                {% elif num > docentes.number|add:'-3' and num < docentes.number|add:'3' %}
+                    <a href="?page={{ num }}&estado={{ estado_actual }}&q={{ query }}&orden={{ orden_actual }}&registros={{ registros_actual }}" 
+                       class="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-[11px] font-bold rounded-xl transition border border-slate-200 shadow-sm">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if docentes.has_next %}
+                <a href="?page={{ docentes.next_page_number }}&estado={{ estado_actual }}&q={{ query }}&orden={{ orden_actual }}&registros={{ registros_actual }}" 
+                   class="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-[11px] font-black uppercase rounded-xl transition border border-slate-200 shadow-sm flex items-center gap-1">
+                    Siguiente <i class="fas fa-chevron-right text-[9px]"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="modalMasiva" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity" onclick="cerrarModalMasiva()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-8 pt-6 pb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Carga Masiva (Excel)</h3>
+                    <button onclick="cerrarModalMasiva()" class="text-slate-400 hover:text-slate-600 transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 mb-6 flex justify-between items-center">
+                    <div class="pr-4">
+                        <p class="text-xs font-black text-blue-900 uppercase">¿No tienes la plantilla?</p>
+                        <p class="text-[11px] text-blue-700 font-medium mt-0.5">Usa el formato oficial para evitar errores.</p>
+                    </div>
+                    <a href="{% url 'descargar_plantilla_docentes' colegio.slug %}" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-blue-700 transition">
+                        Descargar
+                    </a>
+                </div>
+
+                <form method="POST" action="{% url 'cargar_docentes_excel' colegio.slug %}" enctype="multipart/form-data" id="formMasiva">
+                    {% csrf_token %}
+                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-blue-400 transition mb-6 bg-slate-50/50">
+                        <input type="file" name="archivo_excel" id="excel_input" class="hidden" accept=".xlsx, .xls" required>
+                        <label for="excel_input" class="cursor-pointer block">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-2"></i>
+                            <p class="text-xs text-slate-600 font-bold uppercase tracking-wide">Selecciona tu archivo .xlsx</p>
+                            <p id="nombre_archivo" class="text-xs text-emerald-600 font-black mt-2 uppercase font-mono"></p>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black shadow-lg hover:bg-slate-900 transition flex items-center justify-center text-xs uppercase tracking-widest">
+                        <i class="fas fa-file-import mr-2 text-sm"></i> PROCESAR AHORA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalMasiva() {
+        document.getElementById('modalMasiva').classList.remove('hidden');
+    }
+
+    function cerrarModalMasiva() {
+        document.getElementById('modalMasiva').classList.add('hidden');
+    }
+
+    // Mostrar nombre del archivo seleccionado de forma limpia
+    document.getElementById('excel_input').onchange = function() {
+        if(this.files.length > 0) {
+            document.getElementById('nombre_archivo').textContent = "✓ " + this.files[0].name;
+        }
+    };
+</script>
+{% endblock %}

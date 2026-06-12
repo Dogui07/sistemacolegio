@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo de Asignaturas - {{ colegio.nombre }}</title>
+    <style>
+        /* Configuración de la página en xhtml2pdf */
+        @page {
+            size: letter;
+            margin: 1.5cm;
+            margin-bottom: 2.2cm; /* Ampliamos margen inferior para dejar espacio al footer */
+            
+            /* Método nativo de xhtml2pdf para registrar zonas de contenido estático (Footers) */
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                bottom: 1cm;
+                left: 1.5cm;
+                right: 1.5cm;
+                height: 1cm;
+            }
+        }
+        
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1f2937;
+            font-size: 11px;
+        }
+
+        /* Estilo para el contenedor del número de página */
+        #footer_content {
+            text-align: right;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9px;
+            color: #6b7280;
+        }
+        
+        /* Estructura del Encabezado con Tabla Invisible */
+        .tabla-header {
+            width: 100%;
+            margin-bottom: 20px;
+            border: none;
+        }
+        .td-logo {
+            width: 15%;
+            vertical-align: middle;
+            text-align: left;
+        }
+        .td-texto-institucional {
+            width: 85%;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        /* Textos del Encabezado */
+        .republica {
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        .colegio-titulo {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 4px;
+            color: {{ colegio.color_principal }}; 
+        }
+        .lema-colegio {
+            font-size: 9px;
+            font-style: italic;
+            margin-top: 2px;
+            color: #4b5563;
+        }
+        
+        /* Barra de Título del Reporte */
+        .info-reporte {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            border-bottom: 2px solid {{ colegio.color_secundario }}; 
+            padding-bottom: 4px;
+        }
+
+        /* Subtítulo con filtros aplicados */
+        .filtros-aplicados {
+            font-size: 9px;
+            color: #4b5563;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        /* Estilos de la Tabla de Asignaturas */
+        table.tabla-datos {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.tabla-datos th {
+            background-color: {{ colegio.color_principal }}; 
+            color: #ffffff;
+            font-weight: bold;
+            text-align: left;
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 10px;
+        }
+        table.tabla-datos td {
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 10px;
+            vertical-align: middle;
+        }
+        
+        .text-center { text-align: center; }
+        .col-nro { width: 7%; }
+        .col-codigo { width: 18%; }
+        .col-nombre { width: 40%; }
+        .col-nivel { width: 18%; }
+        .col-grado { width: 17%; }
+    </style>
+</head>
+<body>
+
+    <div id="footer_content">
+        Página <pdf:pagenumber/> de <pdf:pagecount/>
+    </div>
+
+    <table class="tabla-header">
+        <tr>
+            <td class="td-logo">
+                {% if colegio.logo %}
+                    <img src="{{ colegio.logo.path }}" width="65" height="65">
+                {% endif %}
+            </td>
+            <td class="td-texto-institucional">
+                <div class="republica">REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
+                <div class="republica">MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
+                <div class="colegio-titulo">{{ colegio.nombre|upper }}</div>
+                {% if colegio.lema %}
+                    <div class="lema-colegio">"{{ colegio.lema }}"</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="info-reporte">
+        CATÁLOGO OFICIAL DE ASIGNATURAS / PLAN DE ESTUDIOS
+    </div>
+    
+    <div class="filtros-aplicados">
+        Filtros aplicados &raquo; 
+        Nivel: <strong>{{ nivel_seleccionado }}</strong> | 
+        Grado/Año: <strong>{{ grado_seleccionado }}</strong>
+        {% if busqueda %} | Búsqueda: <strong>"{{ busqueda }}"</strong>{% endif %}
+    </div>
+
+    <table class="tabla-datos">
+        <thead>
+            <tr>
+                <th class="text-center col-nro">Nro</th>
+                <th class="col-codigo">CÓDIGO</th>
+                <th class="col-nombre">ASIGNATURA / ÁREA DE FORMACIÓN</th>
+                <th class="col-nivel">NIVEL EDUCATIVO</th>
+                <th class="col-grado">GRADO / AÑO</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asignatura in asignaturas %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter|stringformat:"02d" }}</td>
+                    <td style="font-weight: bold; color: #374151;">{{ asignatura.codigo|upper }}</td>
+                    <td>{{ asignatura.nombre|upper }}</td>
+                    <td>{{ asignatura.get_nivel_display|default:asignatura.nivel|upper }}</td>
+                    <td>{{ asignatura.get_grado_display|default:asignatura.grado|upper }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center" style="color: #6b7280; padding: 20px;">
+                        No existen asignaturas registradas que coincidan con los criterios de búsqueda seleccionados.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

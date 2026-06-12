@@ -1,0 +1,250 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<style>
+    /* Forzar mayúsculas visuales acordes a la estética del proyecto */
+    input[type="text"], input[type="email"], select, textarea {
+        text-transform: uppercase;
+    }
+    input::placeholder { text-transform: none; }
+</style>
+
+<div class="max-w-4xl mx-auto space-y-6">
+    
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Registro General de Alumnos</h1>
+            <p class="text-xs text-slate-500">Completa los datos de identidad para ingresar al nuevo estudiante en el sistema.</p>
+        </div>
+    </div>
+
+    <form id="formInscripcion" method="POST" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+            <div class="flex items-center gap-2 text-blue-600 border-b border-slate-100 pb-3">
+                <i class="fas fa-graduation-cap"></i>
+                <span class="text-[11px] font-black uppercase tracking-widest">Datos del Estudiante</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Cédula de Identidad</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="cedula_est" name="cedula_est" required 
+                               class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <button type="button" onclick="verificarEstudiante()" 
+                                class="px-4 bg-slate-800 text-white text-[10px] font-black uppercase rounded-xl hover:bg-slate-700 transition">
+                            Validar
+                        </button>
+                    </div>
+                    <p id="alerta_estudiante" class="hidden text-[10px] font-bold text-red-500 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Nombres</label>
+                    <input type="text" id="nombre_est" name="nombre_est" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Apellidos</label>
+                    <input type="text" id="apellido_est" name="apellido_est" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Fecha de Nacimiento</label>
+                    <input type="date" id="fecha_nac_est" name="fecha_nacimiento_est" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Parentesco con el Representante</label>
+                    <select id="parentesco" name="parentesco" required 
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <option value="">SELECCIONE EL PARENTESCO</option>
+                        <option value="MADRE">MADRE</option>
+                        <option value="PADRE">PADRE</option>
+                        <option value="ABUELO/A">ABUELO/A</option>
+                        <option value="TIO/A">TIO/A</option>
+                        <option value="MADRASTRA">MADRASTRA</option>
+                        <option value="PADRASTRO">PADRASTRO</option>
+                        <option value="LEGAL">TUTOR LEGAL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+            <div class="flex items-center gap-2 text-emerald-600 border-b border-slate-100 pb-3">
+                <i class="fas fa-user-tie"></i>
+                <span class="text-[11px] font-black uppercase tracking-widest">Datos del Representante</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Cédula del Representante</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="cedula_rep" name="cedula_rep" required 
+                               class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <button type="button" onclick="buscarRepresentante()" 
+                                class="px-4 bg-slate-800 text-white text-[10px] font-black uppercase rounded-xl hover:bg-slate-700 transition">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Nombres</label>
+                    <input type="text" id="nombre_rep" name="nombre_rep" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Apellidos</label>
+                    <input type="text" id="apellido_rep" name="apellido_rep" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Teléfono de Contacto</label>
+                    <input type="text" id="telefono_rep" name="telefono_rep" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Correo Electrónico</label>
+                    <input type="email" id="email_rep" name="email_rep" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Fecha de Nacimiento</label>
+                    <input type="date" id="fecha_nac_rep" name="fecha_nacimiento_rep" required 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Dirección de Habitación (Común)</label>
+                <textarea id="direccion_rep" name="direccion_rep" rows="2" required 
+                          class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition"></textarea>
+            </div>
+
+            <div id="info_hijos" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span class="block text-[9px] font-black text-slate-400 uppercase mb-2 tracking-wider">Otros Alumnos Vinculados a este Representante:</span>
+                <ul id="lista_hijos" class="text-xs font-bold text-slate-700 space-y-1"></ul>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'gestionar_estudiantes' colegio.slug %}" 
+               class="px-6 py-3 bg-slate-200 text-slate-700 text-[10px] font-black uppercase rounded-xl hover:bg-slate-300 transition">
+                Cancelar
+            </a>
+            <button type="submit" id="btnGuardar"
+                    class="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase rounded-xl hover:bg-slate-800 transition shadow-lg shadow-slate-900/20">
+                Guardar y Registrar Estudiante
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// A. VERIFICACIÓN DEL ESTUDIANTE (EVITAR DUPLICADOS)
+function verificarEstudiante() {
+    const cedula = document.getElementById('cedula_est').value.trim();
+    const alerta = document.getElementById('alerta_estudiante');
+    const btnGuardar = document.getElementById('btnGuardar');
+    
+    if (!cedula) return;
+
+    fetch("{% url 'buscar_estudiante_ajx' colegio.slug %}?cedula=" + cedula)
+        .then(response => response.json())
+        .then(data => {
+            if (data.existe) {
+                alerta.textContent = data.mensaje;
+                alerta.classList.remove('hidden');
+                btnGuardar.disabled = true;
+                btnGuardar.classList.add('opacity-40', 'cursor-not-allowed');
+            } else {
+                alerta.classList.add('hidden');
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+        })
+        .catch(err => console.error("Error al validar el estudiante:", err));
+}
+
+// B. BÚSQUEDA Y BLOQUEO DEL REPRESENTANTE DE FORMA AUTOMÁTICA
+function buscarRepresentante() {
+    const cedula = document.getElementById('cedula_rep').value.trim();
+    if (!cedula) return;
+
+    fetch("{% url 'buscar_representante_ajx' colegio.slug %}?cedula=" + cedula)
+        .then(response => response.json())
+        .then(data => {
+            const inputNombre = document.getElementById('nombre_rep');
+            const inputApellido = document.getElementById('apellido_rep');
+            const inputTelefono = document.getElementById('telefono_rep');
+            const inputDireccion = document.getElementById('direccion_rep');
+            const inputEmail = document.getElementById('email_rep');
+            const inputFechaNac = document.getElementById('fecha_nac_rep');
+            const selectParentesco = document.getElementById('parentesco');
+
+            const camposAControlar = [inputNombre, inputApellido, inputTelefono, inputDireccion, inputEmail, inputFechaNac];
+
+            if (data.existe) {
+                // Rellenar valores recuperados del backend
+                inputNombre.value = data.nombre || '';
+                inputApellido.value = data.apellido || '';
+                inputTelefono.value = data.telefono || '';
+                inputDireccion.value = data.direccion || '';
+                inputEmail.value = data.email || '';
+                inputFechaNac.value = data.fecha_nacimiento || '';
+                
+                if (data.parentesco) {
+                    selectParentesco.value = data.parentesco;
+                }
+
+                // Bloquear inputs normales
+                camposAControlar.forEach(campo => {
+                    campo.readOnly = true;
+                    campo.classList.add('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+                });
+
+                // Renderizar los representados que posee al pie
+                const infoHijos = document.getElementById('info_hijos');
+                const listaHijos = document.getElementById('lista_hijos');
+                listaHijos.innerHTML = "";
+                
+                if (data.representados && data.representados.length > 0) {
+                    infoHijos.classList.remove('hidden');
+                    data.representados.forEach(h => {
+                        listaHijos.innerHTML += `<li><i class="fas fa-check-circle mr-2 text-emerald-500"></i> ${h.cedula} - ${h.nombre}</li>`;
+                    });
+                } else {
+                    infoHijos.classList.add('hidden');
+                }
+
+            } else {
+                // Liberar en caso de que sea una cédula nueva o inexistente
+                camposAControlar.forEach(campo => {
+                    if (campo !== inputTelefono && campo !== inputDireccion) {
+                        campo.value = '';
+                    }
+                    campo.readOnly = false;
+                    campo.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+                });
+                document.getElementById('info_hijos').classList.add('hidden');
+            }
+        })
+        .catch(err => console.error("Error al buscar el representante:", err));
+}
+</script>
+{% endblock %}

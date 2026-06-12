@@ -1,0 +1,110 @@
+{% extends "users/base_dashboard.html" %}
+
+{% block content_dashboard %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+        <a href="{% url 'gestionar_roles' colegio.slug %}" class="text-slate-400 hover:text-blue-600 text-sm font-bold transition">
+            <i class="fas fa-arrow-left mr-2"></i> VOLVER A ROLES
+        </a>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tighter uppercase mt-4">Configurar Nuevo Rol</h1>
+        <p class="text-slate-500 text-sm">Define el nombre y los accesos para el nuevo perfil del {{ colegio.nombre }}.</p>
+    </div>
+
+    <form method="POST" class="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+        {% csrf_token %}
+        
+        <!-- Nombre del Rol -->
+        <div class="mb-10">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Perfil</label>
+            <input type="text" name="nombre" placeholder="Ej: Secretaria, Coordinador Académico..." required
+                   class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 focus:border-blue-500 focus:bg-white outline-none transition font-bold text-slate-700 text-lg">
+        </div>
+
+        <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-6 border-b border-blue-50 pb-2">Configuración de Permisos</label>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+            
+            <!-- Módulo Contenido -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Gestionar Noticias</span>
+                </div>
+                <input type="checkbox" name="can_manage_news" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Gestionar Galería</span>
+                </div>
+                <input type="checkbox" name="can_manage_gallery" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <!-- Módulo Personas -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Gestionar Personal</span>
+                </div>
+                <input type="checkbox" name="can_manage_staff" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Gestionar Alumnos</span>
+                </div>
+                <input type="checkbox" name="can_manage_students" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <!-- Módulo Académico / Finanzas -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Calificaciones</span>
+                </div>
+                <input type="checkbox" name="can_manage_grades" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Cobros y Pagos</span>
+                </div>
+                <input type="checkbox" name="can_manage_finances" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+
+            <!-- Módulo Cantina -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between md:col-span-2">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center mr-3 text-xs">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700">Módulo de Cantina</p>
+                        <p class="text-[10px] text-slate-400 font-medium">Inventario, ventas y administración del cafetín.</p>
+                    </div>
+                </div>
+                <input type="checkbox" name="can_manage_canteen" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm hover:bg-blue-600 transition shadow-xl shadow-slate-200 uppercase tracking-widest">
+            Confirmar y Guardar Perfil
+        </button>
+    </form>
+</div>
+{% endblock %}

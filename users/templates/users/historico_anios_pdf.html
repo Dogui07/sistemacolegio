@@ -1,0 +1,195 @@
+Este error persistente TypeError: 'NotImplementedType' object is not iterable dentro del analizador CSS de xhtml2pdf se debe a una incompatibilidad estricta con Python 3.14 (la versión moderna que estás utilizando en tu entorno virtual).
+
+El parser de CSS antiguo que utiliza xhtml2pdf internamente (cssParser.py) realiza una validación de selectores que en Python 3.14 devuelve un tipo no iterable al procesar las sub-etiquetas @bottom-right y @bottom-left de las páginas de ReportLab.
+
+La Solución Definitiva
+Para solucionar esto sin tener que degradar tu versión de Python, debemos estructurar el PDF utilizando el estándar clásico de xhtml2pdf / ReportLab. En lugar de usar CSS moderno dentro de @page, utilizamos etiquetas estructurales especiales de ReportLab como <pdf:pagenumber> metidas en una tabla fija o un contenedor inferior, removiendo por completo las propiedades conflictivas del bloque @page.
+
+Aquí tienes el código HTML de historico_anios_pdf.html completamente modificado y blindado contra errores en Python 3.14:
+
+HTML
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Periodos Escolares</title>
+    <style>
+        /* Configuración de página compatible con Python 3.14 y xhtml2pdf */
+        @page {
+            size: letter;
+            margin: 1.5cm 1.5cm 2cm 1.5cm;
+            
+            /* Eliminamos por completo los @bottom-right y @bottom-left que rompen el compilador */
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            font-size: 10pt;
+            line-height: 1.4;
+        }
+
+        /* Encabezado Institucional */
+        .header-container {
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        .colegio-name {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+        .report-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #0284c7;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Datos de Emisión */
+        .meta-info {
+            margin-bottom: 20px;
+            font-size: 9pt;
+            color: #475569;
+        }
+
+        /* Estilos de la Tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 8px 6px;
+            border: 1px solid #0f172a;
+        }
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-bold {
+            font-weight: bold;
+        }
+        
+        /* Cebra para filas intercaladas */
+        .row-even {
+            background-color: #f8fafc;
+        }
+
+        /* Badges de Estado */
+        .badge-activo {
+            color: #047857;
+            font-weight: bold;
+        }
+        .badge-inactivo {
+            color: #64748b;
+        }
+
+        .monto-sub {
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+
+        /* Pie de página estático al final del documento alternativo */
+        .pdf-footer {
+            position: fixed;
+            bottom: -0.5cm;
+            left: 0px;
+            right: 0px;
+            height: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 5px;
+            font-size: 8pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="colegio-name">{{ colegio.nombre }}</div>
+        <div class="report-title">Historial de Periodos Escolares y Aranceles</div>
+    </div>
+
+    <div class="meta-info">
+        <strong>Generado por:</strong> {{ usuario.email }} <br>
+        <strong>Fecha de Exportación:</strong> {% now "d/m/Y g:i a" %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Año Escolar</th>
+                <th style="width: 15%;">Estado</th>
+                <th style="width: 20%;">Vigencia</th>
+                <th style="width: 15%; text-align: center;">Nivel Inicial<br><span style="font-size: 7pt; font-weight: normal;">(Mat / Men)</span></th>
+                <th style="width: 15%; text-align: center;">Nivel Primaria<br><span style="font-size: 7pt; font-weight: normal;">(Mat / Men)</span></th>
+                <th style="width: 15%; text-align: center;">Nivel Secundaria<br><span style="font-size: 7pt; font-weight: normal;">(Mat / Men)</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for anio in anios_escolares %}
+                <tr class="{% if forloop.counter|divisibleby:2 %}row-even{% endif %}">
+                    <td class="text-bold" style="color: #0f172a;">{{ anio.nombre }}</td>
+                    <td>
+                        {% if anio.activo %}
+                            <span class="badge-activo">VIGENTE (ACTIVO)</span>
+                        {% else %}
+                            <span class="badge-inactivo">INACTIVO</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 8.5pt; color: #334155;">
+                        Desde: {{ anio.fecha_inicio|date:"d/m/Y" }}<br>
+                        Hasta: {{ anio.fecha_fin|date:"d/m/Y" }}
+                    </td>
+                    <td class="text-center">
+                        <span class="text-bold">${{ anio.matricula1|default:"0.00" }}</span><br>
+                        <span class="monto-sub">/ ${{ anio.mensualidad1|default:"0.00" }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-bold">${{ anio.matricula2|default:"0.00" }}</span><br>
+                        <span class="monto-sub">/ ${{ anio.mensualidad2|default:"0.00" }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-bold">${{ anio.matricula3|default:"0.00" }}</span><br>
+                        <span class="monto-sub">/ ${{ anio.mensualidad3|default:"0.00" }}</span>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center" style="padding: 30px; color: #64748b; font-weight: bold;">
+                        No existen registros de periodos escolares configurados en el sistema.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pdf-footer">
+        <table style="width: 100%; border: none; margin: 0;">
+            <tr>
+                <td style="border: none; padding: 0; text-align: left; color: #64748b;">
+                    Reporte Institucional - Sistema Escolar
+                </td>
+                <td style="border: none; padding: 0; text-align: right; color: #64748b;">
+                    Página <pdf:pagenumber />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

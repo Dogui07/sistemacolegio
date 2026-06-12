@@ -1,0 +1,135 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="space-y-6">
+    <a href="{% url 'dashboard_docente' colegio.slug %}" class="text-sm font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1">
+        ← Volver al Panel Docente
+    </a>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 text-sm rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <header class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">{{ asignacion.asignatura.nombre }}</h1>
+            <p class="text-slate-500">{{ seccion.grado }} - Sección "{{ seccion.nombre }}" | Nivel: <strong class="text-slate-700">{{ seccion.get_nivel_display }}</strong></p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
+            {% if seccion.nivel != 'INICIAL' %}
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <a href="?lapso=1" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '1' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">1er Lapso</a>
+                <a href="?lapso=2" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '2' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">2do Lapso</a>
+                <a href="?lapso=3" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '3' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">3er Lapso</a>
+            </div>
+            {% endif %}
+
+            <a href="{% url 'imprimir_todas_boletas' colegio.slug asignacion.id %}" target="_blank" class="bg-slate-950 text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-slate-800 transition flex items-center gap-1 shadow-sm">
+                🖨️ Imprimir Todas
+            </a>
+
+            <a href="{% url 'reporte_final_curso' colegio.slug asignacion.id %}" class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-1 shadow-sm">
+                📈 Reporte Final
+            </a>
+        </div>
+    </header>
+
+    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+        <div class="text-xs text-slate-500 text-center lg:text-left">
+            📊 <strong>Importación Cualitativa:</strong> Descarga la plantilla, rellena descriptores (I, EP, C) o textos del lapso y súbela de nuevo.
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+            <a href="{% url 'exportar_plantilla_excel' colegio.slug asignacion.id %}?lapso={{ lapso_actual }}" class="border border-emerald-600 text-emerald-700 bg-white text-xs px-3 py-2 rounded-xl font-bold hover:bg-emerald-50 transition">
+                📥 Excel Plantilla
+            </a>
+            <form action="{% url 'importar_plantilla_excel' colegio.slug asignacion.id %}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="lapso" value="{{ lapso_actual }}">
+                <input type="file" name="archivo_excel" required class="text-xs max-w-[160px] file:bg-slate-200 file:text-slate-800 file:font-bold file:text-xs file:px-2 file:py-1 file:rounded-lg file:border-0 cursor-pointer">
+                <button type="submit" class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-xl font-bold hover:bg-emerald-700 transition">
+                    📤 Cargar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <form method="POST" class="p-6">
+            {% csrf_token %}
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider bg-slate-50">
+                        <th class="p-4">Cédula</th>
+                        <th class="p-4">Apellidos y Nombres</th>
+                        
+                        {% if seccion.es_cuantitativo %}
+                            <th class="p-4 w-32">Nota (1-20)</th>
+                        {% elif seccion.nivel == 'PRIMARIA' %}
+                            <th class="p-4 w-52">Descriptor</th>
+                        {% else %}
+                            <th class="p-4">Registro Descriptivo / Avances</th>
+                        {% endif %}
+                        <th class="p-4">Observaciones del Docente</th>
+                        <th class="p-4 text-center w-24">Acciones</th> </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                    {% for estudiante in estudiantes %}
+                    <tr>
+                        <td class="p-4 font-mono text-xs text-slate-500">{{ estudiante.cedula }}</td>
+                        <td class="p-4 font-bold uppercase text-slate-800">{{ estudiante.apellido }}, {{ estudiante.nombre }}</td>
+                        
+                        <td class="p-4">
+                            {% if seccion.es_cuantitativo %}
+                                <input type="number" min="1" max="20" name="nota_{{ estudiante.id }}" 
+                                       value="{{ estudiante.nota_guardada }}" placeholder="--" 
+                                       class="w-20 px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 text-center font-bold">
+                            {% elif seccion.nivel == 'PRIMARIA' %}
+                                <select name="descriptor_{{ estudiante.id }}" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs font-semibold">
+                                    <option value="">-- Sin Evaluar --</option>
+                                    <option value="I" {% if estudiante.descriptor_guardado == 'I' %}selected{% endif %}>Iniciado (I)</option>
+                                    <option value="EP" {% if estudiante.descriptor_guardado == 'EP' %}selected{% endif %}>En Proceso (EP)</option>
+                                    <option value="C" {% if estudiante.descriptor_guardado == 'C' %}selected{% endif %}>Consolidado (C)</option>
+                                </select>
+                            {% else %}
+                                <textarea name="informe_{{ estudiante.id }}" rows="2" placeholder="Evaluación del ritmo evolutivo del infante..." 
+                                          class="w-full p-2 border border-slate-200 rounded-xl text-xs">{{ estudiante.informe_guardado|default_if_none:"" }}</textarea>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="p-4">
+                            <input type="text" name="observacion_{{ estudiante.id }}" value="{{ estudiante.observacion_guardada }}" placeholder="Recomendaciones..." 
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-600">
+                        </td>
+
+                        <td class="p-4 text-center">
+                            <a href="{% url 'ver_boleta_estudiante' colegio.slug asignacion.id estudiante.id %}" target="_blank" class="text-blue-600 hover:text-blue-800 font-bold text-xs inline-flex items-center gap-1">
+                                📋 Boleta
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-400 italic bg-slate-50">
+                            No existen alumnos con matrícula activa en esta sección.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if estudiantes %}
+            <div class="mt-6 flex justify-end">
+                <button type="submit" class="bg-slate-950 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-850 shadow-sm transition">
+                    💾 Guardar Calificaciones Continuas
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impresión Masiva de Boletas - {{ seccion.grado }} "{{ seccion.nombre }}"</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Regla crítica para separar las hojas en la impresión */
+        .boleta-page {
+            break-after: page;
+            page-break-after: always;
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: #ffffff !important; color: #000000 !important; padding: 0 !important; }
+            .print-card { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen p-4 md:p-8">
+
+    <div class="no-print max-w-4xl mx-auto mb-6 flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-500">
+            📦 Lote de Impresión: {{ boletas_data|length }} estudiantes listos.
+        </span>
+        <button onclick="window.print();" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition cursor-pointer">
+            🖨️ Iniciar Impresión Masiva / Guardar PDF Único
+        </button>
+    </div>
+
+    {% for lote in boletas_data %}
+    <div class="boleta-page print-card max-w-4xl mx-auto bg-white border border-slate-200 shadow-md rounded-2xl p-8 md:p-12 space-y-8 mb-8">
+        
+        <div class="flex flex-col items-center text-center border-b border-slate-200 pb-6 space-y-1.5">
+            <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">República Bolivariana de Venezuela</p>
+            <p class="text-[10px] uppercase font-bold text-slate-500">Ministerio del Poder Popular para la Educación</p>
+            <h1 class="text-lg font-black uppercase text-slate-900 tracking-tight mt-1">{{ colegio.nombre }}</h1>
+            <span class="px-4 py-0.5 bg-slate-100 text-slate-700 font-bold text-[11px] uppercase tracking-wide rounded-full mt-2">
+                Boleta Informativa de Rendimiento Escolar
+            </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+            <div class="space-y-1">
+                <p class="text-slate-500">Estudiante: <strong class="text-slate-900 uppercase font-bold">{{ lote.estudiante.apellido }}, {{ lote.estudiante.nombre }}</strong></p>
+                <p class="text-slate-500">Cédula / ID: <strong class="text-slate-900 font-mono">{{ lote.estudiante.cedula }}</strong></p>
+            </div>
+            <div class="space-y-1 text-right">
+                <p class="text-slate-500">Año Escolar: <strong class="text-slate-900">{{ anio }}</strong></p>
+                <p class="text-slate-500">Grado y Sección: <strong class="text-slate-900 uppercase">{{ seccion.grado }} - Secc. "{{ seccion.nombre }}"</strong></p>
+                <p class="text-slate-500">Nivel: <strong class="text-slate-700 font-black uppercase text-[10px]">{{ seccion.get_nivel_display }}</strong></p>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase bg-slate-100">
+                        <th class="p-3">Asignatura / Área de Formación</th>
+                        <th class="p-3 text-center w-24">1er Lapso</th>
+                        <th class="p-3 text-center w-24">2do Lapso</th>
+                        <th class="p-3 text-center w-24">3er Lapso</th>
+                        {% if es_cuantitativo %}
+                            <th class="p-3 text-center w-24 bg-slate-200/80">Nota Final</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-slate-700">
+                    {% for item in lote.rendimiento %}
+                    <tr>
+                        <td class="p-3 font-bold text-slate-800 uppercase">{{ item.asignatura }}</td>
+                        
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.l1|default:"--" }}
+                            {% else %}
+                                {% if item.l1 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}{{ item.l1.descriptor|default:"--" }}{% else %}{{ item.l1.informe_descriptivo|default:"--" }}{% endif %}
+                                {% else %}--{% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.l2|default:"--" }}
+                            {% else %}
+                                {% if item.l2 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}{{ item.l2.descriptor|default:"--" }}{% else %}{{ item.l2.informe_descriptivo|default:"--" }}{% endif %}
+                                {% else %}--{% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td class="p-3 text-center font-bold">
+                            {% if es_cuantitativo %}
+                                {{ item.l3|default:"--" }}
+                            {% else %}
+                                {% if item.l3 %}
+                                    {% if seccion.nivel == 'PRIMARIA' %}{{ item.l3.descriptor|default:"--" }}{% else %}{{ item.l3.informe_descriptivo|default:"--" }}{% endif %}
+                                {% else %}--{% endif %}
+                            {% endif %}
+                        </td>
+
+                        {% if es_cuantitativo %}
+                            <td class="p-3 text-center font-black bg-slate-50/80 {% if item.final >= 10 %}text-emerald-700{% else %}text-rose-600{% endif %}">
+                                {{ item.final|default:"--" }}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not es_cuantitativo and seccion.nivel == 'PRIMARIA' %}
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500 space-y-0.5">
+            <p class="font-bold text-slate-700">Escala de Estimación Cualitativa:</p>
+            <p><strong>(C) Consolidado:</strong> Alcanzó los objetivos. | <strong>(EP) En Proceso:</strong> Requiere acompañamiento. | <strong>(I) Iniciado:</strong> Comenzando a desarrollar competencias.</p>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-2 gap-12 pt-12 text-center text-[11px] text-slate-600">
+            <div>
+                <div class="w-40 border-b border-slate-300 mx-auto h-6"></div>
+                <p class="font-bold uppercase mt-1">Docente de Aula</p>
+            </div>
+            <div>
+                <div class="w-40 border-b border-slate-300 mx-auto h-6"></div>
+                <p class="font-bold uppercase mt-1">Dirección del Plantel</p>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-[9px] text-slate-400 font-mono">
+            <p>Colegio Madre Laura - Documento Escolar Oficial</p>
+            <p>Fecha de Emisión: {% now "d/m/Y" %}</p>
+        </div>
+    </div>
+    {% endfor %}
+
+</body>
+</html>

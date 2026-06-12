@@ -1,0 +1,173 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-2xl mx-auto">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 mb-4 rounded-xl {% if message.tags == 'error' %}bg-red-100 text-red-600{% else %}bg-green-100 text-green-600{% endif %} font-bold uppercase text-xs">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="mb-8">
+        <a href="{% url 'gestionar_representantes' colegio.slug %}" class="text-blue-600 text-sm font-bold hover:underline">
+            <i class="fas fa-arrow-left mr-2"></i> Volver al listado
+        </a>
+        <h1 class="text-3xl font-black text-slate-800 mt-4">Registrar Nuevo Representante</h1>
+        <p class="text-slate-500">Se creará automáticamente una cuenta de acceso para el representante.</p>
+    </div>
+
+    <form method="POST" id="form-representante" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+        {% csrf_token %}
+        <div class="grid grid-cols-2 gap-6">
+            
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Cédula (Será su contraseña)</label>
+                <div class="flex gap-2">
+                    <input type="text" name="cedula" id="id_cedula" required 
+                        class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase font-bold text-slate-700">
+                    <button type="button" onclick="buscarCedula()" class="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-black transition flex items-center shadow-md">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="alerta-cedula" class="mt-2 hidden text-xs font-bold p-3 rounded-xl"></div>
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Correo Electrónico</label>
+                <input type="email" name="email" id="id_email" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors">
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Nombres</label>
+                <input type="text" name="nombre" id="id_nombre" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase transition-colors">
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Apellidos</label>
+                <input type="text" name="apellido" id="id_apellido" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase transition-colors">
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Teléfono</label>
+                <input type="text" name="telefono" id="id_telefono" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase transition-colors">
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Fecha de Nacimiento</label>
+                <input type="date" name="fecha_nacimiento" id="id_fecha_nacimiento" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-colors">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Profesión</label>
+                <input type="text" name="profesion" id="id_profesion" placeholder="Ej: Abogado, Ingeniero, Médico..." 
+                    class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase transition-colors">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Dirección</label>
+                <input type="text" name="direccion" id="id_direccion" placeholder="Ej: Calle 123, Ciudad..." 
+                    class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase transition-colors">
+            </div>
+        </div>
+        
+        <div id="contenedor-boton-guardar" class="pt-4">
+            <button type="submit" id="btn-guardar" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">
+                Finalizar Registro de Representante
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function buscarCedula() {
+    const cedula = document.getElementById('id_cedula').value.trim();
+    const alerta = document.getElementById('alerta-cedula');
+    const btnGuardar = document.getElementById('btn-guardar');
+    
+    if (!cedula) {
+        alerta.className = "mt-2 text-xs font-bold p-3 rounded-xl bg-amber-100 text-amber-700 block uppercase animate-pulse";
+        alerta.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Por favor, ingrese una cédula para realizar la búsqueda.`;
+        return;
+    }
+
+    // Petición Fetch a la API del backend
+    fetch(`/colegio/{{ colegio.slug }}/representantes/verificar-cedula/?cedula=${cedula}`)
+        .then(response => response.json())
+        .then(data => {
+            const campos = ['nombre', 'apellido', 'email', 'telefono', 'profesion', 'direccion', 'fecha_nacimiento'];
+            
+            if (data.existe) {
+                // 1. Configurar Alerta de Existencia (Rojo suave)
+                alerta.className = "mt-2 text-xs font-bold p-3 rounded-xl bg-red-100 text-red-600 block uppercase";
+                alerta.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i> REPRESENTANTE YA FUE CREADO EN EL SISTEMA.`;
+                
+                // 2. Rellenar los inputs e inactivarlos cambiando el diseño visual
+                campos.forEach(campo => {
+                    const input = document.getElementById(`id_${campo}`);
+                    if (input) {
+                        input.value = data[campo]; // Inyectar el dato real del backend
+                        input.disabled = true;      // Impedir mutación de datos
+                        
+                        // Reemplazar clases de fondo para denotar el bloqueo visual
+                        input.classList.remove('bg-slate-50');
+                        input.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed', 'opacity-80');
+                    }
+                });
+                
+                // 3. Ocultar el botón de envío por completo
+                if (btnGuardar) btnGuardar.classList.add('hidden');
+                
+            } else {
+                // Si la cédula está libre para registro nuevo
+                alerta.className = "mt-2 text-xs font-bold p-3 rounded-xl bg-green-100 text-green-700 block uppercase";
+                alerta.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Cédula disponible para nuevo registro.`;
+                
+                // Restaurar los inputs a su estado original editable
+                campos.forEach(campo => {
+                    const input = document.getElementById(`id_${campo}`);
+                    if (input) {
+                        // Solo limpiar si previamente estaba bloqueado por una búsqueda anterior
+                        if (input.disabled) {
+                            input.value = '';
+                        }
+                        input.disabled = false;
+                        input.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed', 'opacity-80');
+                        input.classList.add('bg-slate-50');
+                    }
+                });
+                
+                // Volver a mostrar el botón de guardar cambios
+                if (btnGuardar) btnGuardar.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error en Fetch:', error);
+            alerta.className = "mt-2 text-xs font-bold p-3 rounded-xl bg-red-100 text-red-600 block uppercase";
+            alerta.innerHTML = `<i class="fas fa-wifi mr-1"></i> Error de comunicación con el servidor.`;
+        });
+}
+
+// Escuchador inteligente: si el usuario cambia el número de cédula, limpia el bloqueo para evitar errores
+document.getElementById('id_cedula').addEventListener('input', function() {
+    const alerta = document.getElementById('alerta-cedula');
+    const btnGuardar = document.getElementById('btn-guardar');
+    const campos = ['nombre', 'apellido', 'email', 'telefono', 'profesion', 'direccion', 'fecha_nacimiento'];
+    
+    alerta.classList.add('hidden');
+    if (btnGuardar) btnGuardar.classList.remove('hidden');
+    
+    campos.forEach(campo => {
+        const input = document.getElementById(`id_${campo}`);
+        if (input && input.disabled) {
+            input.value = '';
+            input.disabled = false;
+            input.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed', 'opacity-80');
+            input.classList.add('bg-slate-50');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+<div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+    <h3 class="text-xl font-black text-slate-800 tracking-tighter uppercase">
+        Ficha del Representante
+    </h3>
+    <button onclick="cerrarModalFicha()" class="text-slate-400 hover:text-red-500 transition">
+        <i class="fas fa-times text-xl"></i>
+    </button>
+</div>
+
+<div id="areaImprimir" class="p-8">
+    <div class="flex items-center gap-6 mb-8">
+        <div class="w-24 h-24 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
+            <i class="fas fa-user text-4xl"></i>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900">{{ representante.nombre }} {{ representante.apellido }}</h2>
+            <p class="text-blue-600 font-bold">C.I.: {{ representante.cedula }}</p>
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-bold uppercase">Activo</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase">Profesión</label>
+                <p class="text-sm font-bold text-slate-700">{{ representante.profesion|default:"No definida" }}</p>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase">Edad</label>
+                <p class="text-sm font-bold text-slate-700">{{ representante.edad }} Años</p>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase">Teléfono</label>
+                <p class="text-sm font-bold text-slate-700">{{ representante.telefono|default:"-" }}</p>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase">Dirección</label>
+                <p class="text-sm font-bold text-slate-700 leading-tight">{{ representante.direccion|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-slate-100">
+        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center">
+            <i class="fas fa-user-graduate mr-2 text-blue-500"></i> Estudiantes Bajo su Representación
+        </h4>
+        
+        <div class="grid grid-cols-1 gap-3">
+            {% for relacion in relaciones %}
+            <div class="flex items-center justify-between p-1 rounded-2xl bg-slate-50 border border-slate-100">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-400 flex items-center justify-center">
+                        <i class="fas fa-user text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">
+                            {{ relacion.estudiante.nombre }} {{ relacion.estudiante.apellido }}
+                        </p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase">
+                            C.I.: {{ relacion.estudiante.cedula|default:"S/C" }} • {{ relacion.parentesco }}
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-black uppercase">
+                        {{ relacion.estudiante.edad }} Años
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-6 border-2 border-dashed border-slate-100 rounded-3xl">
+                <p class="text-xs text-slate-400 font-bold uppercase italic">No hay estudiantes vinculados</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+    <button onclick="cerrarModalFicha()" class="px-6 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition">
+        Cerrar
+    </button>
+    <a href="{% url 'imprimir_ficha_representante_pdf' colegio.slug representante.id %}" target="_blank"
+       class="px-6 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition flex items-center">
+        <i class="fas fa-print mr-2"></i> Imprimir Ficha
+    </a>
+</div>

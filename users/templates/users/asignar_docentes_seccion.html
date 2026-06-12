@@ -1,0 +1,108 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <div class="flex items-center gap-2 mb-1">
+            <a href="{% url 'gestionar_secciones' colegio_slug=colegio.slug %}" class="text-xs font-black uppercase text-blue-600 hover:underline flex items-center gap-1">
+                <i class="fas fa-arrow-left"></i> Volver a Secciones
+            </a>
+        </div>
+        <h1 class="text-3xl font-black text-slate-800">Distribuir Carga Académica</h1>
+        <p class="text-slate-500">Asigna los profesores titulares y auxiliares para las materias automáticas de la sección.</p>
+    </div>
+    
+    <div class="bg-slate-800 text-white p-4 rounded-2xl shadow-sm text-right flex flex-col justify-center min-w-[180px]">
+        <span class="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Sección Seleccionada</span>
+        <span class="text-lg font-black uppercase">{{ seccion.grado }} — "{{ seccion.nombre }}"</span>
+        <span class="text-[10px] font-bold text-blue-300 uppercase mt-0.5">{{ seccion.get_nivel_display }}</span>
+    </div>
+</div>
+
+<form method="POST" action="" class="space-y-6">
+    {% csrf_token %}
+    
+    {{ formset.management_form }}
+
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
+        <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h2 class="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <i class="fas fa-book-reader text-slate-500"></i> Catálogo de Materias Generadas
+            </h2>
+            <span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase">
+                {{ formset.forms|length }} Asignaturas
+            </span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        <th class="px-6 py-4 w-1/4">Asignatura / Código</th>
+                        <th class="px-4 py-4 text-center w-24">Carga Horaria</th>
+                        <th class="px-6 py-4 w-1/3">Docente Principal (Dicta la materia)</th>
+                        <th class="px-6 py-4 w-1/3">Docente Auxiliar / Co-Docente</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for form in formset.forms %}
+                        <tr class="hover:bg-slate-50/40 transition">
+                            <td class="px-6 py-4">
+                                {{ form.id }}
+                                <div class="font-black text-slate-800 uppercase text-xs">
+                                    {{ form.instance.asignatura.nombre }}
+                                </div>
+                                <span class="text-[10px] font-mono text-slate-400 font-bold uppercase block mt-0.5">
+                                    Code: {{ form.instance.asignatura.codigo }}
+                                </span>
+                            </td>
+                            
+                            <td class="px-4 py-4 text-center font-black text-slate-600 text-xs">
+                                <span class="px-2 py-1 bg-slate-100 rounded-lg text-slate-700 font-extrabold">
+                                    {{ form.instance.asignatura.horas_semanales }}h
+                                </span>
+                                <span class="block text-[9px] text-slate-400 uppercase font-medium mt-1.5">Semanales</span>
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="relative">
+                                    {{ form.docente }}
+                                </div>
+                                {% if form.docente.errors %}
+                                    <p class="text-[10px] text-red-600 font-bold uppercase mt-1">{{ form.docente.errors.0 }}</p>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="px-6 py-4">
+                                <div class="relative">
+                                    {{ form.docente_auxiliar }}
+                                </div>
+                                {% if form.docente_auxiliar.errors %}
+                                    <p class="text-[10px] text-red-600 font-bold uppercase mt-1">{{ form.docente_auxiliar.errors.0 }}</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 font-bold uppercase text-xs tracking-wider">
+                                <i class="fas fa-exclamation-circle text-lg block mb-2 text-slate-300"></i>
+                                No se ha generado la carga académica automática para esta sección. <br>
+                                <span class="text-[10px] font-normal text-slate-400 lowercase">Verifique que existan asignaturas cargadas en el catálogo correspondientes al nivel y grado.</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="flex justify-end items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <a href="{% url 'gestionar_secciones' colegio_slug=colegio.slug %}" class="bg-slate-200 text-slate-600 hover:bg-slate-300 font-bold px-6 py-3 rounded-xl text-xs uppercase transition tracking-wide">
+            Cancelar Cambios
+        </a>
+        <button type="submit" {% if not formset.forms %}disabled{% endif %} class="bg-blue-600 disabled:bg-slate-300 text-white font-bold px-8 py-3 rounded-xl shadow-md hover:bg-blue-700 transition text-xs uppercase tracking-wide flex items-center gap-2">
+            <i class="fas fa-save"></i> Guardar Carga Académica
+        </button>
+    </div>
+</form>
+{% endblock %}

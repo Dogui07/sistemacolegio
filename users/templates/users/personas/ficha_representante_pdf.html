@@ -1,0 +1,35 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+    <style>
+        @page { size: letter; margin: 1.5cm; }
+        body { font-family: Helvetica, sans-serif; -pdf-encoding: "utf-8"; }
+        .titulo-ficha { text-align: center; background: #f1f5f9; padding: 10px; font-weight: bold; margin: 20px 0; border: 1px solid #e2e8f0; -pdf-encoding: "utf-8";}
+        .tabla-datos { width: 100%; margin-bottom: 20px; }
+        .label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold; -pdf-encoding: "utf-8";}
+        .value { font-size: 11px; font-weight: bold; }
+        .header-estudiantes { background: {{ colegio.color_principal }}; color: white; padding: 5px 10px; font-size: 10px; -pdf-encoding: "utf-8";}
+    </style>
+</head>
+<body>
+    <div class="titulo-ficha">FICHA DE DATOS DEL REPRESENTANTE</div>
+
+    <table class="tabla-datos">
+        <tr>
+            <td colspan="2"><span class="label">Nombre Completo</span><br><span class="value">{{ representante.nombre }} {{ representante.apellido }}</span></td>
+            <td><span class="label">Cédula de Identidad</span><br><span class="value">{{ representante.cedula }}</span></td>
+        </tr>
+        </table>
+
+    <div class="header-estudiantes">ESTUDIANTES BAJO SU REPRESENTACIÓN</div>
+    <table style="width: 100%; border-collapse: collapse;">
+        {% for relacion in relaciones %}
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px; font-size: 10px;">{{ relacion.estudiante.nombre }} {{ relacion.estudiante.apellido }}</td>
+            <td style="padding: 8px; font-size: 10px;">{{ relacion.parentesco }}</td>
+            <td style="padding: 8px; font-size: 10px;">{{ relacion.estudiante.edad }} Años</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

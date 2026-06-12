@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Pago Fiscal</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 12mm 12mm 12mm 12mm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #1e293b;
+        }
+        
+        .w-100 { width: 100%; }
+        .w-60 { width: 60%; }
+        .w-50 { width: 50%; }
+        .w-40 { width: 40%; }
+        .w-15 { width: 15%; }
+        .w-10 { width: 10%; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: monospace; }
+        
+        /* ========================================== */
+        /* COLORES DINÁMICOS DESDE EL MODELO COLEGIO  */
+        /* ========================================== */
+        .header-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: {{ colegio.color_principal }}; /* Color Principal Dinámico */
+            margin: 0 0 4px 0;
+        }
+        .factura-badge {
+            background-color: #f8fafc;
+            border: 2px solid {{ colegio.color_principal }}; /* Borde con Color Principal */
+            padding: 12px;
+        }
+        .factura-badge h3 {
+            margin: 0 0 6px 0;
+            font-size: 11pt;
+            color: {{ colegio.color_principal }};
+        }
+        .border-decorator {
+            /* Usamos el color secundario (ej. el Oro) para detalles decorativos */
+            border: 1px solid {{ colegio.color_secundario }}; 
+            padding: 10px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .items-table th {
+            background-color: {{ colegio.color_principal }}; /* Encabezado de tabla dinámico */
+            color: #ffffff;
+            font-size: 9pt;
+            font-weight: bold;
+            padding: 8px;
+            border: 1px solid {{ colegio.color_principal }};
+        }
+        .items-table td {
+            padding: 10px 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 9.5pt;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 4px 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 9pt;
+        }
+        .bg-slate {
+            background-color: #f8fafc;
+            font-weight: bold;
+        }
+        .legal-footer {
+            font-size: 7.5pt;
+            color: #64748b;
+            text-align: justify;
+            line-height: 1.4;
+        }
+
+        /* ========================================== */
+        /* MÁSCARA DE OCULTACIÓN (AL FINAL PARA OVERRIDE) */
+        /* ========================================== */
+        {% if tipo == 'datos' %}
+        .completo-only { color: #ffffff !important; }
+        h1.completo-only, h3.completo-only, div.completo-only, p.completo-only { color: #ffffff !important; }
+        .factura-badge { background-color: #ffffff !important; border: 1px solid #ffffff !important; }
+        .border-decorator { border: 1px solid #ffffff !important; }
+        .items-table th { background-color: #ffffff !important; color: #ffffff !important; border: 1px solid #ffffff !important; }
+        .items-table td, .totals-table td { border: 1px solid #ffffff !important; background-color: #ffffff !important; }
+        .bg-slate { background-color: #ffffff !important; color: #ffffff !important; }
+        .legal-footer { color: #ffffff !important; }
+        {% endif %}
+    </style>
+</head>
+<body>
+
+<div class="w-100">
+    
+    <table class="w-100" style="margin-bottom: 15px;">
+        <tr>
+            {% if tipo == 'completo' and colegio.logo %}
+            <td style="width: 12%; vertical-align: top;">
+                <img src="{{ colegio.logo.path }}" width="60" height="60">
+            </td>
+            {% endif %}
+            
+            <td style="{% if tipo == 'completo' and colegio.logo %}width: 48%;{% else %}width: 60%;{% endif %} vertical-align: top; padding-left: 5px;">
+                <h1 class="header-title completo-only" style="margin-top: 0;">{{ colegio.nombre }}</h1>
+                <p class="completo-only" style="margin: 2px 0; font-size: 8.5pt; color: #475569;">
+                    <strong>Rif:</strong> {{ colegio.rif|default:"J-31116772-2" }}<br>
+                    <strong>Dirección:</strong> {{ colegio.direccion|default:"Dirección no registrada" }}<br>
+                    <strong>Teléfono:</strong> {{ colegio.telefono|default:"N/A" }}<br>
+                    <strong>Contacto:</strong> {{ colegio.correo_contacto|default:"" }}
+                </p>
+            </td>
+            
+            <td class="w-40 text-right" style="vertical-align: top;">
+                <div class="factura-badge">
+                    <h3 class="completo-only" style="text-transform: uppercase;">Factura / Recibo</h3>
+                    <p style="margin: 2px 0; font-size: 9pt; font-family: monospace;">
+                        <span class="completo-only">N° Documento: </span><strong>7000{{ pago.id }}</strong><br>
+                        <span class="completo-only">N° Control: </span><strong>00-000{{ pago.id|add:"7800" }}</strong><br>
+                        <span class="completo-only">Fecha Emisión: </span><span>{{ fecha_emision|date:"d/m/Y" }}</span><br>
+                        <span class="completo-only">Moneda: </span><span>Bs / Ref $</span>
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="border-decorator" style="margin-top: 10px; margin-bottom: 15px;">
+        <table class="w-100">
+            <tr>
+                <td class="w-50" style="vertical-align: top;">
+                    <p style="margin: 2px 0; font-size: 9pt;">
+                        <span class="completo-only"><strong>Razón Social:</strong> </span>
+                        <span style="text-transform: uppercase;">
+                            {% if representante %}{{ representante.nombre }} {{ representante.apellido }}{% else %}{{ pago.estudiante.apellido }}, {{ pago.estudiante.nombre }}{% endif %}
+                        </span><br>
+                        
+                        <span class="completo-only"><strong>RIF / C.I.:</strong> </span>
+                        <span>
+                            {% if representante %}V-{{ representante.cedula }}{% else %}V-{{ pago.estudiante.cedula }}{% endif %}
+                        </span><br>
+                        
+                        <span class="completo-only"><strong>Domicilio:</strong> </span>
+                        <span style="color: #475569;">Sector Sta Ana Norte, Calle 1, Casa 098</span>
+                    </p>
+                </td>
+                <td class="w-50 text-right" style="vertical-align: top;">
+                    <p style="margin: 2px 0; font-size: 9pt;">
+                        <span class="completo-only"><strong>Estudiante:</strong> </span>
+                        <span style="text-transform: uppercase;">{{ pago.estudiante.apellido }}, {{ pago.estudiante.nombre }}</span><br>
+                        
+                        <span class="completo-only"><strong>Cédula:</strong> </span>
+                        <span>V-{{ pago.estudiante.cedula }}</span><br>
+                        
+                        <span class="completo-only"><strong>Condición de Pago:</strong> </span>
+                        <span>Contado (Ref: {{ pago.num_referencia|default:"N/A" }})</span>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="items-table" style="margin-top: 15px; margin-bottom: 15px;">
+        <thead>
+            <tr>
+                <th class="w-15 text-center">Código</th>
+                <th class="w-45" style="text-align: left;">Descripción de la Cuota / Concepto</th>
+                <th class="w-10 text-center">Cant.</th>
+                <th class="w-15 text-right">Precio U. (Bs.)</th>
+                <th class="w-15 text-right">Monto (Bs.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="text-center font-mono">P00{{ pago.num_cuota|default:"1" }}</td>
+                <td>
+                    <span style="font-weight: bold;">{{ pago.detalle }}</span>
+                    <div class="completo-only" style="font-size: 8pt; color: #64748b; margin-top: 2px;">Año Escolar: {{ pago.anio_escolar.nombre }}</div>
+                </td>
+                <td class="text-center">1,00</td>
+                <td class="text-right font-mono">{{ monto_bs|floatformat:2 }}</td>
+                <td class="text-right font-mono" style="font-weight: bold;">{{ monto_bs|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="w-100" style="margin-top: 10px;">
+        <tr>
+            <td class="w-50" style="vertical-align: top;">
+                <p class="completo-only" style="font-size: 8.5pt; color: #475569; margin-top: 5px;">
+                    Monto referencial en divisas: <strong>${{ pago.monto|floatformat:2 }}</strong><br>
+                    Tasa de cambio de referencia (BCV): <strong>{{ tasa_cambio|floatformat:4 }} Bs/$</strong>
+                </p>
+            </td>
+            <td class="w-50" style="vertical-align: top;">
+                <table class="totals-table">
+                    <tr>
+                        <td class="bg-slate completo-only" style="width: 60%;">Base Exenta:</td>
+                        <td class="text-right font-mono" style="width: 40%;">Bs. {{ base_exenta_bs|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-slate completo-only">Base Imponible (16,00%):</td>
+                        <td class="text-right font-mono">Bs. 0,00</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-slate completo-only">IVA (16,00%):</td>
+                        <td class="text-right font-mono">Bs. 0,00</td>
+                    </tr>
+                    <tr style="font-size: 10pt; font-weight: bold;">
+                        <td class="bg-slate completo-only" style="color: #1e3a8a;">Total Factura:</td>
+                        <td class="text-right font-mono" style="color: #1e3a8a;">Bs. {{ total_factura_bs|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="legal-footer completo-only" style="margin-top: 30px;">
+        Este pago estará sujeto al cobro adicional del 3% del Impuesto a las Grandes Transacciones Financieras (IGTF), de conformidad con la Providencia Administrativa SENIAT/2022/000013 publicada en G.O. N° 42.339 del 17-03-2022, en caso de ser cancelado en divisas. Documento emitido en concordancia con el artículo 128 de la Ley del Banco Central de Venezuela (BCV) y regulaciones del SENIAT.
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+{% extends "users/base_dashboard.html" %}
+
+{% block content_dashboard %}
+<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Gestor de Usuarios</h1>
+            <p class="text-slate-500 text-sm">Control de credenciales y acceso al sistema</p>
+        </div>
+    </div>
+
+    <table class="w-full text-left">
+        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest border-b border-slate-100">
+            <tr>
+                <th class="px-6 py-4">Usuario (Email)</th>
+                <th class="px-6 py-4">Rol Asignado</th>
+                <th class="px-6 py-4">Estado</th>
+                <th class="px-6 py-4 text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+        {% for u in usuarios %}
+        <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-6 py-4 font-medium text-slate-700">{{ u.email }}</td>
+            <td class="px-6 py-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
+                    {{ u.rol.nombre|upper }}
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                {% if u.is_active %}
+                    <span class="text-green-500 text-xs font-bold flex items-center">
+                        <i class="fas fa-circle mr-2 text-[6px]"></i> Activo
+                    </span>
+                {% else %}
+                    <span class="text-red-400 text-xs font-bold flex items-center">
+                        <i class="fas fa-circle mr-2 text-[6px]"></i> Suspendido
+                    </span>
+                {% endif %}
+            </td>
+            <td class="px-6 py-4 text-right">
+                <a href="{% url 'resetear_password' u.id %}" class="text-slate-400 hover:text-blue-600 transition mx-2" title="Cambiar Contraseña">
+                    <i class="fas fa-key text-xs"></i>
+                </a>
+                <button onclick="abrirModalRol('{{ u.id }}', '{{ u.email }}', '{{ u.rol.id }}')" 
+                        class="text-slate-400 hover:text-emerald-600 transition mx-2" 
+                        title="Cambiar Rol">
+                    <i class="fas fa-user-tag text-xs"></i>
+                </button>
+                <!-- Botón Alternar Estado (ACTIVO/SUSPENDIDO) -->
+                <a href="{% url 'alternar_estado_usuario' u.id %}" 
+                class="transition {% if u.is_active %}text-slate-400 hover:text-red-600{% else %}text-red-500 hover:text-green-600{% endif %}" 
+                title="{% if u.is_active %}Suspender Usuario{% else %}Activar Usuario{% endif %}">
+                    <i class="fas fa-ban text-xs"></i>
+                </a>                
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="modalRol" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
+        <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity" onclick="cerrarModalRol()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="formCambiarRol" method="POST" action="">
+                {% csrf_token %}
+                <div class="bg-white px-8 pt-6 pb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-black text-slate-800">Cambiar Rol de Acceso</h3>
+                        <button type="button" onclick="cerrarModalRol()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-slate-500 mb-4">Actualizando permisos para: <span id="emailUsuarioModal" class="font-bold text-slate-800"></span></p>
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Seleccione Nuevo Rol</label>
+                        <select name="nuevo_rol" id="selectRolModal" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+                            {% for rol in roles %}
+                                <option value="{{ rol.id }}">{{ rol.nombre|upper }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition">
+                        CONFIRMAR CAMBIO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalRol(id, email, rolId) {
+        const modal = document.getElementById('modalRol');
+        const form = document.getElementById('formCambiarRol');
+        const emailSpan = document.getElementById('emailUsuarioModal');
+        const select = document.getElementById('selectRolModal');
+
+        // Configurar el action del form dinámicamente (ajusta la URL según tus rutas)
+        form.action = `/usuarios/cambiar-rol/${id}/`; 
+        
+        emailSpan.textContent = email;
+        select.value = rolId;
+
+        modal.classList.remove('hidden');
+    }
+
+    function cerrarModalRol() {
+        document.getElementById('modalRol').classList.add('hidden');
+    }
+</script>
+
+{% endblock %}  

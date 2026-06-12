@@ -1,0 +1,65 @@
+{% extends 'users/base_dashboard.html' %}
+{% block content_dashboard %}
+<div class="space-y-6">
+    <header class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <h1 class="text-xl font-black text-slate-800">Evaluación: {{ plan.descripcion }} ({{ plan.ponderacion }}%)</h1>
+        <p class="text-sm text-slate-400">{{ asignacion.asignatura.nombre }} | {{ asignacion.seccion.grado }} "{{ asignacion.seccion.nombre }}"</p>
+    </header>
+
+    <div class="bg-slate-50 p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="text-xs text-slate-500">
+            💡 <strong>Carga Masiva:</strong> Descarga la plantilla estructurada, rellena la columna de notas y vuelve a subirla.
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'exportar_plantilla_excel' colegio.slug asignacion.id %}?plan_id={{ plan.id }}" class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center gap-1">
+                📥 Descargar Plantilla
+            </a>
+            <form action="{% url 'importar_plantilla_excel' colegio.slug asignacion.id %}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                <input type="file" name="archivo_excel" required class="text-xs max-w-[180px] file:bg-slate-900 file:text-white file:font-bold file:text-xs file:px-3 file:py-1.5 file:rounded-xl file:border-0 file:hover:bg-slate-800 cursor-pointer">
+                <button type="submit" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-sm transition">
+                    📤 Importar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <form method="POST" class="p-6">
+            {% csrf_token %}
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase bg-slate-50">
+                        <th class="p-4">Cédula</th>
+                        <th class="p-4">Estudiante</th>
+                        <th class="p-4 w-32 text-center">Calificación (1-20)</th>
+                        <th class="p-4">Observaciones de la Actividad</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for est in estudiantes %}
+                    <tr>
+                        <td class="p-4 font-mono text-xs text-slate-400">{{ est.cedula }}</td>
+                        <td class="p-4 font-bold uppercase text-slate-800">{{ est.apellido }}, {{ est.nombre }}</td>
+                        <td class="p-4 text-center">
+                            <input type="number" min="1" max="20" name="nota_{{ est.id }}" value="{{ est.nota_guardada }}" placeholder="--" required
+                                   class="w-20 px-3 py-2 border border-slate-200 rounded-xl text-center font-black text-slate-900 focus:ring-2 focus:ring-slate-900">
+                        </td>
+                        <td class="p-4">
+                            <input type="text" name="observacion_{{ est.id }}" value="{{ est.obs_guardada }}" placeholder="Ej: Faltó a la defensa..." 
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-600">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <a href="{% url 'ver_curso_docente' colegio.slug asignacion.id %}?lapso={{ plan.lapso }}" class="px-5 py-2.5 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Cancelar</a>
+                <button type="submit" class="bg-slate-950 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-850 shadow-sm transition">💾 Guardar Notas de Actividad</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

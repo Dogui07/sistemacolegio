@@ -1,0 +1,120 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-2xl mx-auto">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 mb-4 rounded-xl {% if message.tags == 'error' %}bg-red-100 text-red-600{% else %}bg-green-100 text-green-600{% endif %} font-bold">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="mb-8">
+        <a href="{% url 'gestionar_administrativos' colegio.slug %}" class="text-blue-600 text-sm font-bold hover:underline">
+            <i class="fas fa-arrow-left mr-2"></i> Volver al listado
+        </a>
+        <h1 class="text-3xl font-black text-slate-800 mt-4">Editar Administrativo</h1>
+        <p class="text-slate-500">Modificando el perfil de: {{ administrativo.nombre }} {{ administrativo.apellido }}</p>
+    </div>
+
+    <form method="POST" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-2 gap-6">
+            <div class="col-span-2">
+                <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-2">Información de Cuenta y Personal</h2>
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Correo Electrónico</label>
+                <input type="email" name="email" value="{{ administrativo.usuario.email }}" required 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Teléfono</label>
+                <input type="text" name="telefono" value="{{ administrativo.telefono }}" 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Nombres</label>
+                <input type="text" name="nombre" value="{{ administrativo.nombre }}" required 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Apellidos</label>
+                <input type="text" name="apellido" value="{{ administrativo.apellido }}" required 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Dirección</label>
+                <input type="text" name="direccion" value="{{ administrativo.direccion }}" 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Fecha de Nacimiento</label>
+                <input type="date" name="fecha_nacimiento" 
+                       value="{{ administrativo.fecha_nacimiento|date:'Y-m-d' }}" 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="col-span-2 mt-4">
+                <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-2">Detalles Laborales</h2>
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Cargo / Función</label>
+                <input type="text" name="cargo" value="{{ administrativo.detalle_laboral.cargo }}" required 
+                       placeholder="Ej: Secretaria, Contador..." 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Profesión</label>
+                <input type="text" name="profesion" value="{{ administrativo.detalle_laboral.profesion }}" required 
+                       placeholder="Ej: Lic. en Educación" 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Fecha de Ingreso</label>
+                <input type="date" name="fecha_inicio" 
+                       value="{{ administrativo.detalle_laboral.fecha_inicio|date:'Y-m-d' }}" required 
+                       class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100">
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Estado del Registro</h3>
+                    <p class="text-xs text-slate-500">
+                        {% if administrativo.activo %}
+                            El administrativo está activo en las listas y tiene acceso.
+                        {% else %}
+                            Este registro está desactivado (oculto en listas generales).
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="activo" class="sr-only peer" {% if administrativo.activo %}checked{% endif %}>
+                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+            </div>
+        </div>
+
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black shadow-lg hover:bg-slate-900 transition">
+                <i class="fas fa-save mr-2"></i> GUARDAR CAMBIOS
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

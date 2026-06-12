@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page {
+            size: letter;
+            margin: 1cm;
+        }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #1e3a8a; }
+        .titulo { font-size: 18px; font-weight: bold; color: #1e3a8a; text-transform: uppercase; }
+        .tabla-datos { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tabla-datos td { border: 1px solid #ccc; padding: 8px; font-size: 12px; }
+        .label { font-weight: bold; color: #666; font-size: 10px; display: block; }
+        .foto-box { width: 120px; height: 140px; border: 1px solid #ccc; text-align: center; }
+        .seccion-head { background-color: #f0f4f8; font-weight: bold; padding: 5px; margin-top: 15px; border-left: 5px solid #1e3a8a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="titulo">Ficha de Inscripción Estudiantil</div>
+        <div>{{ colegio.nombre }}</div>
+    </div>
+
+    <table style="width: 100%; margin-top: 20px;">
+        <tr>
+            <td>
+                <div class="seccion-head">DATOS DEL ESTUDIANTE</div>
+                <table class="tabla-datos">
+                    <tr>
+                        <td colspan="2"><span class="label">NOMBRES Y APELLIDOS</span> {{ estudiante.nombre }} {{ estudiante.apellido }}</td>
+                    </tr>
+                    <tr>
+                        <td width="50%"><span class="label">CÉDULA</span> {{ estudiante.cedula }}</td>
+                        <td width="50%"><span class="label">FECHA NACIMIENTO</span> {{ estudiante.detalle_academico.fecha_nacimiento|date:"d/m/Y" }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td width="130px" align="right">
+                {% if estudiante.foto %}
+                    <img src="{{ estudiante.foto.path }}" class="foto-box">
+                {% else %}
+                    <div class="foto-box"><br><br>SIN FOTO</div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="seccion-head">DATOS DEL REPRESENTANTE</div>
+    <table class="tabla-datos">
+        {% for relacion in relaciones %}
+        <tr>
+            <td width="40%"><span class="label">NOMBRE</span> {{ relacion.representante.nombre }} {{ relacion.representante.apellido }}</td>
+            <td width="30%"><span class="label">PARENTESCO</span> {{ relacion.parentesco }}</td>
+            <td width="30%"><span class="label">TELÉFONO</span> {{ relacion.representante.telefono }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div style="margin-top: 50px;">
+        <table width="100%">
+            <tr>
+                <td align="center" style="border:0">__________________________<br>Firma Representante</td>
+                <td align="center" style="border:0">__________________________<br>Sello Institución</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

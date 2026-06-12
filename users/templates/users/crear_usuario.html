@@ -1,0 +1,50 @@
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-400{% else %}bg-green-100 text-green-700 border border-green-400{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+    <div class="bg-slate-900 p-8 text-white">
+        <h2 class="text-2xl font-bold">Registrar Nueva Persona</h2>
+        <p class="text-slate-400 text-sm">Crea el perfil personal y las credenciales de acceso.</p>
+    </div>
+
+    <form method="POST" class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% csrf_token %}
+        
+        <div class="space-y-4">
+            <h3 class="font-bold text-slate-700 border-b pb-2">Datos Personales</h3>
+            <input type="text" name="cedula" placeholder="Cédula/ID" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <input type="text" name="nombre" placeholder="Nombres" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <input type="text" name="apellido" placeholder="Apellidos" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <select name="tipo" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none">
+                {% for val, label in tipos_persona %}
+                    <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="space-y-4 bg-slate-50 p-6 rounded-2xl">
+            <h3 class="font-bold text-slate-700 border-b pb-2">Cuenta de Usuario</h3>
+            <input type="email" name="email" placeholder="Correo Electrónico (Será su usuario)" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <input type="password" name="password" placeholder="Contraseña Temporal" class="w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none" required>
+            
+            <label class="block text-sm font-bold text-slate-600 mt-4">Asignar Rol de Sistema:</label>
+            <select name="rol" class="w-full p-3 rounded-xl border border-blue-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                {% for rol in roles %}
+                    <option value="{{ rol.id }}">{{ rol.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="md:col-span-2 mt-6">
+            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                Finalizar Registro
+            </button>
+        </div>
+    </form>
+</div>

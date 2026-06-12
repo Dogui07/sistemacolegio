@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Estudiantes</title>
+    <style>
+        /* Configuración de página compatible con Python 3.14 y xhtml2pdf */
+        @page {
+            size: letter;
+            margin: 1.5cm 1.5cm 2cm 1.5cm;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+
+        /* Encabezado Institucional */
+        .header-container {
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .colegio-name {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+        .report-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #0284c7;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Datos de Emisión */
+        .meta-info {
+            margin-bottom: 15px;
+            font-size: 8.5pt;
+            color: #475569;
+        }
+
+        /* Estilos de la Tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 6px 5px;
+            border: 1px solid #0f172a;
+        }
+        td {
+            padding: 6px 5px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 8.5pt;
+            vertical-align: middle;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-bold {
+            font-weight: bold;
+        }
+        
+        .row-even {
+            background-color: #f8fafc;
+        }
+
+        /* Pie de página estático al final del documento */
+        .pdf-footer {
+            position: fixed;
+            bottom: -0.5cm;
+            left: 0px;
+            right: 0px;
+            height: 25px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 4px;
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="colegio-name">{{ colegio.nombre }}</div>
+        <div class="report-title">Reporte General de Estudiantes Activos</div>
+    </div>
+
+    <div class="meta-info">
+        <strong>Fecha de Emisión:</strong> {{ fecha|date:"d/m/Y g:i a" }} <br>
+        <strong>Total Matrícula:</strong> {{ estudiantes.count }} Alumnos
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Cédula</th>
+                <th style="width: 35%;">Estudiante (Apellidos, Nombres)</th>
+                <th style="width: 25%;">Grado / Sección</th>
+                <th style="width: 13%;">Beca</th>
+                <th style="width: 12%; text-align: center;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for est in estudiantes %}
+                <tr class="{% if forloop.counter|divisibleby:2 %}row-even{% endif %}">
+                    <td class="text-bold">{{ est.cedula }}</td>
+                    <td class="uppercase">{{ est.apellido }}, {{ est.nombre }}</td>
+                    <td>
+                        {% if est.detalle_academico.seccion %}
+                            {{ est.detalle_academico.seccion.grado.nombre }} - {{ est.detalle_academico.seccion.nombre }}
+                        {% else %}
+                            {% with ultima_ins=est.inscripciones.filter.last %}
+                                {% if ultima_ins %}
+                                    {{ ultima_ins.seccion.grado.nombre }} - {{ ultima_ins.seccion.nombre }}
+                                {% else %}
+                                    SIN ASIGNAR
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if est.detalle_academico.becado %}
+                            SI ({{ est.detalle_academico.porcentaje_beca }}%)
+                        {% else %}
+                            NO
+                        {% endif %}
+                    </td>
+                    <td class="text-center text-bold" style="color: #047857;">
+                        ACTIVO
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center" style="padding: 20px; color: #64748b;">
+                        No existen estudiantes registrados actualmente.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pdf-footer">
+        <table style="width: 100%; border: none; margin: 0;">
+            <tr>
+                <td style="border: none; padding: 0; text-align: left; color: #64748b;">
+                    Sistema de Gestión Escolar - {{ colegio.nombre }}
+                </td>
+                <td style="border: none; padding: 0; text-align: right; color: #64748b;">
+                    Página <pdf:pagenumber />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

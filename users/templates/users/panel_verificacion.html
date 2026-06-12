@@ -1,0 +1,168 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="w-full">
+    
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5 mb-6">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">Bandeja de Conciliación Bancaria</h1>
+            <p class="text-sm text-slate-500 mt-1">Verifica y aprueba los pagos reportados por los representantes.</p>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                {{ pagos_pendientes.count }} Por Verificar
+            </span>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl text-sm {% if message.tags == 'success' %} bg-emerald-50 text-emerald-800 border border-emerald-200 {% else %} bg-amber-50 text-amber-800 border border-amber-200 {% endif %} border shadow-sm">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if pagos_pendientes %}
+    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <tr>
+                    <th class="px-6 py-4 font-bold">Estudiante / Rep.</th>
+                    <th class="px-6 py-4 font-bold">Concepto / Cuota</th>
+                    <th class="px-6 py-4 font-bold text-right">Monto (USD)</th>
+                    <th class="px-6 py-4 font-bold text-right">Monto (Bs.)</th>
+                    <th class="px-6 py-4 font-bold">Método / Ref.</th>
+                    <th class="px-6 py-4 font-bold text-center">Comprobante</th>
+                    <th class="px-6 py-4 font-bold text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                {% for pago in pagos_pendientes %}
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <div class="font-semibold text-slate-800">{{ pago.estudiante.nombre }} {{ pago.estudiante.apellido }}</div>
+                        <div class="text-xs text-slate-400 mt-0.5">Rep: {{ pago.representante.get_full_name|default:pago.representante.email }}</div>
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                            {{ pago.get_tipo_pago_display }}
+                        </span>
+                        <div class="text-xs text-slate-400 mt-1">Cuota #{{ pago.num_cuota }}</div>
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4 text-right font-bold text-emerald-600">
+                        ${{ pago.monto }}
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4 text-right font-semibold text-slate-700">
+                        {% if pago.monto_bs %}
+                            Bs. {{ pago.monto_bs }}
+                        {% else %}
+                            <span class="text-slate-300">—</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <div class="text-slate-700 text-xs font-semibold">{{ pago.get_metodo_pago_display }}</div>
+                        <div class="font-mono text-xs text-blue-600 mt-0.5 font-bold bg-blue-50 px-1.5 py-0.5 rounded inline-block">{{ pago.num_referencia }}</div>
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4 text-center">
+                        {% if pago.comprobante %}
+                            <button type="button" 
+                                    onclick="abrirModalComprobante('{{ pago.comprobante.url }}', '{{ pago.estudiante.nombre }} - Ref: {{ pago.num_referencia }}')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 transition-all">
+                                <i class="fas fa-eye"></i> Ver Capture
+                            </button>
+                        {% else %}
+                            <span class="text-xs text-slate-400">Sin imagen</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="whitespace-nowrap px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <form action="{% url 'procesar_verificacion_pago' colegio.slug pago.id %}" method="POST" onsubmit="return confirm('¿Confirmas que recibiste este dinero en cuenta?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="aprobar">
+                                <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all">
+                                    Aprobar
+                                </button>
+                            </form>
+                            
+                            <button type="button" 
+                                    onclick="abrirModalRechazo('{% url 'procesar_verificacion_pago' colegio.slug pago.id %}', '{{ pago.estudiante.nombre }}')"
+                                    class="px-4 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-600 hover:text-rose-600 transition-all shadow-sm">
+                                Rechazar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl bg-white shadow-sm">
+        <i class="fas fa-check-circle text-4xl text-emerald-500 mb-3"></i>
+        <h3 class="text-sm font-bold text-slate-800">¡Al día con las conciliaciones!</h3>
+        <p class="text-xs text-slate-400 mt-1">No hay reportes de pago pendientes por auditar en este momento.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="modalComprobante" class="hidden fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h3 id="modalComprobanteTitulo" class="text-sm font-bold text-slate-700"></h3>
+            <button type="button" onclick="cerrarModalComprobante()" class="text-slate-400 hover:text-slate-600 text-2xl font-light leading-none">&times;</button>
+        </div>
+        <div class="p-4 flex justify-center bg-slate-100">
+            <img id="modalComprobanteImg" src="" alt="Capture" class="max-h-[65vh] rounded-xl object-contain shadow-sm">
+        </div>
+    </div>
+</div>
+
+<div id="modalRechazo" class="hidden fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100">
+        <h3 class="text-lg font-black text-slate-800 mb-1">Rechazar Reporte de Pago</h3>
+        <p id="modalRechazoTexto" class="text-xs text-slate-400 mb-4"></p>
+        
+        <form id="formRechazo" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="rechazar">
+            <textarea name="motivo_rechazo" required rows="3" 
+                      placeholder="Ej: La referencia no figura en el banco..."
+                      class="w-full rounded-xl bg-slate-50 border border-slate-200 p-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"></textarea>
+            
+            <div class="flex items-center justify-end gap-2 mt-4">
+                <button type="button" onclick="cerrarModalRechazo()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">Cancelar</button>
+                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-sm">Confirmar Rechazo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalComprobante(url, titulo) {
+    document.getElementById('modalComprobanteImg').src = url;
+    document.getElementById('modalComprobanteTitulo').innerText = titulo;
+    document.getElementById('modalComprobante').classList.remove('hidden');
+}
+function cerrarModalComprobante() {
+    document.getElementById('modalComprobante').classList.add('hidden');
+}
+function abrirModalRechazo(urlAction, nombreEstudiante) {
+    document.getElementById('formRechazo').action = urlAction;
+    document.getElementById('modalRechazoTexto').innerText = `El pago de ${nombreEstudiante} será devuelto para corrección.`;
+    document.getElementById('modalRechazo').classList.remove('hidden');
+}
+function cerrarModalRechazo() {
+    document.getElementById('modalRechazo').classList.add('hidden');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,251 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="mb-8">
+    <h1 class="text-3xl font-black text-slate-800">Gestión de Periodos Escolares</h1>
+    <p class="text-slate-500">Configura los lapsos académicos del colegio y los aranceles financieros por nivel.</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="p-4 mb-6 rounded-2xl {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'warning' %}bg-amber-100 text-amber-700{% else %}bg-emerald-100 text-emerald-700{% endif %} font-bold text-xs uppercase shadow-sm">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-6">
+            <h2 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> Nuevo Periodo
+            </h2>
+            
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nombre del Año Escolar</label>
+                    <input type="text" name="nombre" placeholder="Ej: 2026-2027" required
+                        class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-slate-700 uppercase">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Fecha Inicio</label>
+                        <input type="date" name="fecha_inicio" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Fecha Fin</label>
+                        <input type="date" name="fecha_fin" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3 mt-2">
+                    <span class="text-xs font-black text-slate-700 uppercase block mb-3 tracking-wider">Configuración Económica</span>
+                    
+                    <div class="bg-slate-50 p-3 rounded-xl mb-3 space-y-2">
+                        <span class="text-[10px] font-black text-blue-600 uppercase block"><i class="fas fa-baby mr-1"></i> Nivel Inicial</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" step="0.01" name="matricula1" placeholder="Matrícula" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                            <input type="number" step="0.01" name="mensualidad1" placeholder="Mensualidad" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl mb-3 space-y-2">
+                        <span class="text-[10px] font-black text-emerald-600 uppercase block"><i class="fas fa-user-graduate mr-1"></i> Nivel Primaria</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" step="0.01" name="matricula2" placeholder="Matrícula" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                            <input type="number" step="0.01" name="mensualidad2" placeholder="Mensualidad" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl space-y-2">
+                        <span class="text-[10px] font-black text-purple-600 uppercase block"><i class="fas fa-university mr-1"></i> Nivel Secundaria</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" step="0.01" name="matricula3" placeholder="Matrícula" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                            <input type="number" step="0.01" name="mensualidad3" placeholder="Mensualidad" class="w-full p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-900 transition mt-4 text-sm">
+                    Aperturar Año Escolar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-history text-slate-500"></i> Historial de Periodos Configurados
+                </h2>
+                <a href="{% url 'exportar_anios_escolares_pdf' colegio.slug %}" target="_blank"
+                    class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-red-100 transition flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-file-pdf text-sm"></i> Imprimir Histórico
+                </a>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                            <th class="px-6 py-4">Año Escolar</th>
+                            <th class="px-6 py-4">Vigencia</th>
+                            <th class="px-6 py-4 text-center">Costos Inicial</th>
+                            <th class="px-6 py-4 text-center">Costos Primaria</th>
+                            <th class="px-6 py-4 text-center">Costos Secundaria</th>
+                            <th class="px-6 py-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        {% for anio in anios_escolares %}
+                            <tr class="hover:bg-slate-50/70 transition {% if anio.activo %} bg-blue-50/30 {% endif %}">
+                                <td class="px-6 py-4 font-black text-slate-800 uppercase">
+                                    <div class="flex items-center gap-2">
+                                        {{ anio.nombre }}
+                                        {% if anio.activo %}
+                                            <span class="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Activo</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-medium text-slate-500">
+                                    <div><span class="font-bold text-slate-700">Inicia:</span> {{ anio.fecha_inicio|date:"d/m/Y" }}</div>
+                                    <div class="mt-0.5"><span class="font-bold text-slate-700">Cierra:</span> {{ anio.fecha_fin|date:"d/m/Y" }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center text-xs">
+                                    <span class="font-bold text-slate-700">${{ anio.matricula1|default:"0.00" }}</span>
+                                    <div class="text-[10px] text-slate-400">/ ${{ anio.mensualidad1|default:"0.00" }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center text-xs">
+                                    <span class="font-bold text-slate-700">${{ anio.matricula2|default:"0.00" }}</span>
+                                    <div class="text-[10px] text-slate-400">/ ${{ anio.mensualidad2|default:"0.00" }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center text-xs">
+                                    <span class="font-bold text-slate-700">${{ anio.matricula3|default:"0.00" }}</span>
+                                    <div class="text-[10px] text-slate-400">/ ${{ anio.mensualidad3|default:"0.00" }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{% url 'cambiar_estado_anio' colegio.slug anio.id %}" 
+                                           class="p-2 rounded-lg transition text-xs font-bold {% if anio.activo %}text-amber-600 bg-amber-50 hover:bg-amber-100{% else %}text-emerald-600 bg-emerald-50 hover:bg-emerald-100{% endif %}"
+                                           title="{% if anio.activo %}Desactivar periodo{% else %}Activar periodo{% endif %}">
+                                            <i class="fas {% if anio.activo %}fa-power-off{% else %}fa-check{% endif %}"></i>
+                                        </a>
+                                        
+                                        <button type="button" 
+                                            onclick="abrirModalEditar(
+                                            '{{ anio.id }}', 
+                                            '{{ anio.nombre }}', 
+                                            '{{ anio.fecha_inicio|date:'Y-m-d' }}', 
+                                            '{{ anio.fecha_fin|date:'Y-m-d' }}', 
+                                            '{{ anio.matricula1|stringformat:'.2f' }}', 
+                                            '{{ anio.mensualidad1|stringformat:'.2f' }}', 
+                                            '{{ anio.matricula2|stringformat:'.2f' }}', 
+                                            '{{ anio.mensualidad2|stringformat:'.2f' }}', 
+                                            '{{ anio.matricula3|stringformat:'.2f' }}', 
+                                            '{{ anio.mensualidad3|stringformat:'.2f' }}'
+    )"
+                                            class="p-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-bold">
+                                    NO SE HAN CONFIGURADO PERIODOS ESCOLARES TODAVÍA.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalEditarAnio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 animate-fade-in">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h3 class="font-black text-slate-800 uppercase flex items-center gap-2 text-sm">
+                <i class="fas fa-edit text-blue-500"></i> Modificar Periodo Escolar
+            </h3>
+            <button type="button" onclick="cerrarModalEditar()" class="text-slate-400 hover:text-slate-600 text-sm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="formEditarAnio" method="POST" class="p-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nombre</label>
+                <input type="text" name="nombre" id="edit_nombre" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase font-bold text-slate-700">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Inicio</label>
+                    <input type="date" name="fecha_inicio" id="edit_fecha_inicio" required class="w-full p-3 bg-slate-50 border-none rounded-xl text-xs text-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Fin</label>
+                    <input type="date" name="fecha_fin" id="edit_fecha_fin" required class="w-full p-3 bg-slate-50 border-none rounded-xl text-xs text-slate-700">
+                </div>
+            </div>
+            
+            <div class="space-y-3 pt-2">
+                <span class="text-xs font-black text-slate-700 uppercase block tracking-wider">Aranceles Monetarios</span>
+                
+                <div class="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl items-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Inicial</span>
+                    <input type="number" step="0.01" name="matricula1" id="edit_mat1" placeholder="Mat." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                    <input type="number" step="0.01" name="mensualidad1" id="edit_men1" placeholder="Mens." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl items-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Primaria</span>
+                    <input type="number" step="0.01" name="matricula2" id="edit_mat2" placeholder="Mat." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                    <input type="number" step="0.01" name="mensualidad2" id="edit_men2" placeholder="Mens." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl items-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Secundaria</span>
+                    <input type="number" step="0.01" name="matricula3" id="edit_mat3" placeholder="Mat." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                    <input type="number" step="0.01" name="mensualidad3" id="edit_men3" placeholder="Mens." class="p-2 bg-white border border-slate-100 rounded-lg text-xs">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 transition mt-2 text-sm">
+                Guardar Cambios
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalEditar(id, nombre, inicio, fin, mat1, men1, mat2, men2, mat3, men3) {
+    // Ajuste de URL (Manteniendo tu ruta corregida sin /colegio/)
+    document.getElementById('formEditarAnio').action = `/{{ colegio.slug }}/periodo-escolar/${id}/editar/`;
+    
+    // Inyectamos los datos básicos
+    document.getElementById('edit_nombre').value = nombre;
+    document.getElementById('edit_fecha_inicio').value = inicio;
+    document.getElementById('edit_fecha_fin').value = fin;
+    
+    // Inyectamos los montos reemplazando comas por puntos para que el input tipo 'number' los reconozca
+    document.getElementById('edit_mat1').value = mat1.replace(',', '.');
+    document.getElementById('edit_men1').value = men1.replace(',', '.');
+    document.getElementById('edit_mat2').value = mat2.replace(',', '.');
+    document.getElementById('edit_men2').value = men2.replace(',', '.');
+    document.getElementById('edit_mat3').value = mat3.replace(',', '.');
+    document.getElementById('edit_men3').value = men3.replace(',', '.');
+    
+    // Mostramos el modal
+    document.getElementById('modalEditarAnio').classList.remove('hidden');
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditarAnio').classList.add('hidden');
+}
+</script>
+{% endblock %}

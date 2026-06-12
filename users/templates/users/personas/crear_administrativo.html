@@ -1,0 +1,91 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="p-4 mb-4 rounded-xl {% if message.tags == 'error' %}bg-red-100 text-red-600{% else %}bg-green-100 text-green-600{% endif %} font-bold">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% block content_dashboard %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+        <a href="{% url 'gestionar_administrativos' colegio.slug %}" class="text-blue-600 text-sm font-bold hover:underline">
+            <i class="fas fa-arrow-left mr-2"></i> Volver al listado
+        </a>
+        <h1 class="text-3xl font-black text-slate-800 mt-4">Registrar Nuevo Administrativo</h1>
+        <p class="text-slate-500">Se creará automáticamente una cuenta de acceso para el administrativo.</p>
+    </div>
+
+    <form method="POST" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+    {% csrf_token %}
+        <div class="grid grid-cols-2 gap-6">
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Cédula</label>
+                <input type="text" name="cedula" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Correo Electrónico</label>
+                <input type="email" name="email" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Nombres</label>
+                <input type="text" name="nombre" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Apellidos</label>
+                <input type="text" name="apellido" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Fecha de Nacimiento</label>
+                <input type="date" name="fecha_nacimiento" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Rol del Sistema</label>
+                <select name="rol" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Seleccione un rol...</option>
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}">{{ rol.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-[10px] text-slate-400 mt-1 italic">Define qué puede hacer en la plataforma.</p>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Dirección</label>
+                <input type="text" name="direccion" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+
+            <div class="col-span-2 border-t border-slate-100 pt-4">
+                <h3 class="text-sm font-bold text-slate-400 uppercase mb-4">Información Laboral</h3>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Cargo</label>
+                <input type="text" name="cargo" required placeholder="Ej: Secretaria, Contador..." class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Profesión</label>
+                <input type="text" name="profesion" required placeholder="Ej: Lic. en Educación" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 uppercase">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Fecha de Inicio</label>
+                <input type="date" name="fecha_inicio" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Teléfono</label>
+                <input type="text" name="telefono" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-900 transition shadow-lg shadow-slate-200">
+            GUARDAR ADMINISTRATIVO
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+</div>
+{% endblock %}

@@ -1,0 +1,271 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+
+{% if request.user.rol.nombre == 'Representante' %}
+<div class="space-y-8">
+    <header class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800">Portal del Representante</h1>
+            <p class="text-slate-500">Bienvenido, {{ request.user.persona.nombre|default:request.user.email }}. Aquí puedes consultar la información académica y administrativa de tus representados.</p>
+        </div>
+        <div class="bg-white px-4 py-2 border border-slate-200 rounded-2xl shadow-sm text-right">
+            <span class="text-[10px] font-bold text-slate-400 uppercase block">Tasa BCV del Día</span>
+            <span class="text-sm font-black text-emerald-600">Bs. {{ tasa_actual|default:"--"|floatformat:2 }}</span>
+        </div>
+    </header>
+
+    <div>
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <i class="fas fa-graduation-cap text-blue-500"></i> Mis Representados
+        </h2>
+        
+        {% for estudiante in sus_representados %}
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between relative">
+                
+                {% if colegio.tiene_cantina %}
+                <a href="{% url 'cantina_estudiante' colegio.slug estudiante.id %}" 
+                class="absolute top-6 right-6 w-10 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-md shadow-orange-500/20 transition-all transform hover:scale-110 group" 
+                title="Ver Cantina y Billetera Digital">
+                    <i class="fas fa-utensils text-sm group-hover:animate-bounce"></i>
+                </a>
+                {% endif %}
+
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="w-14 h-14 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center text-slate-400 border border-slate-200 shadow-sm shrink-0">
+                        {% if estudiante.foto %}
+                            <img src="{{ estudiante.foto.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <i class="fas fa-user text-lg"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 leading-tight">{{ estudiante.nombre }} {{ estudiante.apellido }}</h3>
+                        <p class="text-xs text-slate-400 mt-1">C.I: {{ estudiante.cedula|default:"Sin Cédula" }}</p>
+                        <span class="inline-block mt-2 px-2.5 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-md border border-blue-100">
+                            {{ estudiante.seccion.grado|default:"Sin Grado" }} - Sección "{{ estudiante.seccion.nombre|default:"-" }}"
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <a href="{% url 'estado_cuenta_estudiante' colegio.slug estudiante.id %}" class="bg-white text-slate-700 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 transition-colors">
+                        <i class="fas fa-file-invoice-dollar text-emerald-500"></i> Estado Cuenta
+                    </a>
+
+                   {% if estudiante.solvente %}
+                        <a href="{% url 'descargar_boleta_representante' colegio.slug estudiante.id %}" 
+                        class="bg-slate-900 text-white rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 transition-colors">
+                            <i class="fas fa-download"></i> Descargar Boleta
+                        </a>
+                    {% else %}
+                        <button onclick="alert('Estimado Representante, para descargar la boleta de calificaciones debe estar solvente con los compromisos administrativos del colegio.')" 
+                                class="bg-slate-200 text-slate-400 cursor-not-allowed rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm opacity-75">
+                            <i class="fas fa-lock text-slate-400"></i> Descargar Boleta
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-2 bg-white p-10 text-center rounded-3xl border border-dashed border-slate-300">
+                <p class="text-slate-400 italic text-sm">No tienes estudiantes asociados a tu cuenta de representante en este momento. Por favor comunícate con la administración.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% else %}
+
+<div class="space-y-8">
+    <header class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800">Bienvenido, {{ request.user.persona.nombre|default:request.user.email }}</h1>
+            <p class="text-slate-500 mb-3">Gestión administrativa de {{ colegio.nombre }}</p>
+            
+            <div class="flex gap-2">
+                {% if colegio.imparte_inicial %}
+                    <span class="flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-lg border border-blue-200">
+                        <i class="fas fa-child mr-1.5"></i> Inicial
+                    </span>
+                {% endif %}
+                {% if colegio.imparte_primaria %}
+                    <span class="flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-lg border border-emerald-200">
+                        <i class="fas fa-book mr-1.5"></i> Primaria
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <span class="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold uppercase rounded-full shadow-lg">Panel Activo</span>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-blue-500">
+            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Publicaciones Totales</h3>
+            <p class="text-4xl font-black text-slate-800 mt-2">{{ total_publicaciones }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-emerald-500">
+            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Fotos en Galería</h3>
+            <p class="text-4xl font-black text-slate-800 mt-2">{{ total_fotos }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-purple-500">
+            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Estado del Sistema</h3>
+            <p class="text-xl font-bold text-emerald-500 mt-2 flex items-center gap-2">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> EN LÍNEA
+            </p>
+        </div>
+         <div class="bg-white p-6 rounded-3xl shadow-sm border-l-4 border-yellow-500">
+            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Precio del Dólar BCV</h3>
+            <p class="text-xl font-bold text-yellow-500 mt-2 flex items-center gap-2">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>Bs. {{ tasa_actual|default:"--"|floatformat:2 }}
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-black text-slate-800">Últimas Noticias</h2>
+                    <a href="{% url 'gestionar_contenido' colegio.slug %}" class="px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-bold uppercase rounded">Editar</a>
+                </div>
+                <a href="{% url 'crear_publicacion' colegio.slug %}" class="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold uppercase rounded-xl hover:bg-slate-700 transition">
+                    + Crear
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase">
+                            <th class="px-6 py-4 italic">Título</th>
+                            <th class="px-6 py-4 italic">Tipo</th>
+                            <th class="px-6 py-4 italic">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        {% for noticia in ultimas_publicaciones %}
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold text-slate-700">{{ noticia.titulo|truncatechars:40 }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[8px] font-bold uppercase rounded">
+                                    {{ noticia.tipo|default:"Noticia/Blog" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-[10px] text-slate-400 font-bold uppercase">
+                                {{ noticia.fecha_creacion|date:"d M Y" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-10 text-center text-slate-400 text-sm italic">No hay noticias publicadas todavía.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black">Comunidad Escolar</h2>
+                        <p class="text-slate-400 text-xs font-medium">Gestión de personal y alumnos.</p>
+                    </div>
+                    <span class="px-2 py-1 bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase rounded border border-blue-500/30">Módulo Administrativo</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <p class="text-2xl font-black text-blue-400">{{ personas.count }}</p>
+                        <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Estudiantes Activos</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col justify-center">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <p class="text-[8px] font-bold text-emerald-500 uppercase tracking-wider">Sincronizado</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if pagos_por_conciliar > 0 or estudiantes_por_inscribir > 0 %}
+                <div class="space-y-2.5 mb-6">
+                    
+                    {% if pagos_por_conciliar > 0 %}
+                    <div class="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 px-4 py-3 rounded-2xl text-xs transition-all hover:bg-amber-500/15">
+                        <span class="font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fas fa-wallet text-sm animate-bounce"></i> Pagos por conciliar
+                        </span>
+                        <span class="bg-amber-500 text-slate-950 px-2.5 py-0.5 rounded-lg font-black text-[11px] shadow-sm">
+                            {{ pagos_por_conciliar }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if estudiantes_por_inscribir > 0 %}
+                    <div class="flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 px-4 py-3 rounded-2xl text-xs transition-all hover:bg-indigo-500/15">
+                        <span class="font-bold text-indigo-400 flex items-center gap-2">
+                            <i class="fas fa-user-plus text-sm"></i> Estudiantes por inscribir
+                        </span>
+                        <span class="bg-indigo-500 text-white px-2.5 py-0.5 rounded-lg font-black text-[11px] shadow-sm">
+                            {{ estudiantes_por_inscribir }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                </div>
+                {% endif %}
+
+                <div class="space-y-3">
+                    <a href="{% url 'gestionar_usuarios' colegio.slug %}" class="block w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-sm uppercase text-center hover:bg-slate-100 transition shadow-lg">
+                        Directorio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                    <h2 class="text-xl font-black text-slate-800">Galería de Fotos</h2>
+                    <div class="flex gap-2">
+                        <a href="{% url 'gestionar_contenido' colegio.slug %}" class="px-4 py-2 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-xl hover:bg-slate-200 transition">
+                            Editar
+                            </a>
+                        <a href="{% url 'cargar_galeria' colegio.slug %}" class="px-4 py-2 bg-slate-800 text-white text-[10px] font-bold uppercase rounded-xl hover:bg-slate-700 transition">
+                            + Añadir Fotos
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    {% if imagenes %}
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {% for foto in imagenes|slice:":6" %}
+                                <div class="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-50 shadow-sm">
+                                    <img src="{{ foto.imagen.url }}" alt="Galería {{ colegio.nombre }}" class="w-full h-full object-cover">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if total_fotos > 6 %}
+                            <p class="mt-4 text-center">
+                                <a href="{% url 'gestionar_contenido' colegio.slug %}" class="text-[10px] font-black text-slate-400 uppercase hover:text-slate-600">Ver todas las fotos ({{ total_fotos }})</a>
+                            </p>
+                        {% endif %}
+                    {% else %}
+                        <div class="py-10 text-center">
+                            <div class="w-16 h-16 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-images text-2xl"></i>
+                            </div>
+                            <p class="text-slate-400 text-sm italic">No hay fotos en la galería todavía.</p>
+                        </div>
+                    {% endif %}
+                </div>        
+            </div>
+        </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

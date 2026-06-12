@@ -1,0 +1,53 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if editando %} Editar Publicación {% else %} Nueva Publicación {% endif %} - {{ colegio.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex">
+    <div class="w-64 bg-slate-900 text-white p-6 min-h-screen">
+        <img src="{{ colegio.logo.url }}" class="h-16 mx-auto mb-6">
+        <nav class="space-y-4">
+            <a href="{% url 'dashboard_colegio' colegio.slug %}" class="block py-2 px-4 hover:bg-slate-800 rounded-lg text-gray-400 italic">← Volver al Dashboard</a>
+        </nav>
+    </div>
+    
+    <main class="flex-1 p-10">
+        <div class="max-w-2xl mx-auto bg-white p-10 rounded-3xl shadow-sm border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                {% if editando %}
+                    Editar Publicación
+                {% else %}
+                    Crear Nueva Publicación
+                {% endif %}
+            </h2>
+            <p class="text-gray-500 mb-8 text-sm">Completa los campos para informar a la comunidad escolar.</p>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="pt-4 flex gap-4">
+                    <button type="submit" class="flex-1 text-white font-bold py-3 rounded-xl shadow-lg transition transform hover:-translate-y-1" style="background-color: {{ colegio.color_principal }}">
+                        Publicar Noticia
+                    </button>
+                    <a href="{% url 'dashboard_colegio' colegio.slug %}" class="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition text-center">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

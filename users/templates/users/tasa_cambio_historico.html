@@ -1,0 +1,70 @@
+{% extends 'users/base_dashboard.html' %} 
+
+{% block content_dashboard %}
+<div class="p-6 space-y-6 text-slate-800">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-5">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-950">Historial Tasa de Cambio</h1>
+            <p class="text-sm text-slate-500 mt-1">Monitoreo automático del Dólar Oficial BCV para conciliaciones escolares.</p>
+        </div>
+        
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center shadow-sm">
+            <div class="mr-3 p-2 bg-emerald-500 rounded-lg text-white flex items-center justify-center w-10 h-10">
+                <i class="fas fa-dollar-sign text-lg"></i>
+            </div>
+            <div>
+                <span class="text-xs uppercase tracking-wider font-semibold text-emerald-700 block">Tasa Actual BCV</span>
+                <strong class="text-xl font-bold text-emerald-950">Bs. {{ tasa_actual|default:"--"|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center">
+            <i class="fas fa-history text-slate-400 mr-2"></i>
+            <h2 class="font-semibold text-slate-900">Registros Guardados en Sistema</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
+                        <th class="py-3 px-6 text-center">Fecha de Vigencia</th>
+                        <th class="py-3 px-6 text-center">Moneda Base</th>
+                        <th class="py-3 px-6 text-right">Valor en Bolívares (Bs.)</th>
+                        <th class="py-3 px-6 text-center">Última Sincronización</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-sm">
+                    {% for registro in historico_tasas %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-4 px-6 text-center font-semibold text-slate-900">
+                            {{ registro.fecha|date:"d/m/Y" }}
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                {{ registro.moneda }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-right font-bold text-emerald-600">
+                            Bs. {{ registro.precio|floatformat:4 }}
+                        </td>
+                        <td class="py-4 px-6 text-center text-slate-500 text-xs">
+                            {{ registro.fecha_actualizacion|date:"d/m/Y - h:i a" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-slate-400 font-medium">
+                            No hay registros de tasas guardadas aún.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

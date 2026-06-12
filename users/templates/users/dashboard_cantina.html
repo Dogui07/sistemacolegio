@@ -1,0 +1,417 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="space-y-6 max-h-screen">
+    
+    {% if messages %}
+    <div class="fixed top-4 right-4 z-50 space-y-2 w-96 implementation-messages">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl shadow-lg border text-sm font-bold flex justify-between items-center bg-white 
+            {% if message.tags == 'success' %} border-emerald-200 text-emerald-800 bg-emerald-50 {% else %} border-rose-200 text-rose-800 bg-rose-50 {% endif %}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 font-black">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <header class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 flex items-center gap-2">🏪 Panel de Cantina</h1>
+            <p class="text-xs text-slate-400 font-medium">Colegio Madre Laura • Gestión Operativa</p>
+        </div>
+        
+        <div class="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto">
+            <button onclick="switchTab('tab-ventas')" id="btn-tab-ventas"
+                class="flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-black transition-all flex items-center justify-center gap-2 bg-white text-slate-900 shadow-sm">
+                ⚡ Cobrar (Modo Recreo)
+            </button>
+            <button onclick="switchTab('tab-catalogo')" id="btn-tab-catalogo"
+                class="flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800">
+                📦 Catálogo y Rubros
+            </button>
+        </div>
+    </header>
+
+    <div id="tab-ventas" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start dynamic-tab">
+        
+        <div class="lg:col-span-7 space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <label class="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wide">1. Buscar Estudiante</label>
+                <div class="relative">
+                    <input type="text" id="buscador-estudiante" autocomplete="off"
+                        class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 pl-11 text-lg font-bold text-slate-800 focus:border-slate-900 focus:bg-white transition focus:outline-none"
+                        placeholder="Escribe apellido o cédula...">
+                    <span class="absolute left-4 top-4 text-slate-400">🔍</span>
+                </div>
+
+                <div id="lista-estudiantes" class="hidden mt-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white shadow-md">
+                    {% for est in estudiantes %}
+                    <button type="button" 
+                        class="w-full text-left px-4 py-3 hover:bg-slate-50 flex justify-between items-center transition opcion-estudiante"
+                        data-id="{{ est.id }}" 
+                        data-nombre="{{ est.nombre }} {{ est.apellido }}"
+                        data-saldo="{{ est.billetera_cantina.saldo|default:'0.00' }}">
+                        <div>
+                            <span class="font-bold text-slate-800">{{ est.apellido }}, {{ est.nombre }}</span>
+                            <span class="text-xs text-slate-400 block">CI: {{ est.cedula }}</span>
+                        </div>
+                        <span class="bg-orange-50 text-orange-600 px-3 py-1 rounded-lg text-sm font-black">
+                            {{ est.billetera_cantina.saldo|default:"0.00" }} BS
+                        </span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-black text-slate-700 mb-4 uppercase tracking-wide">2. Productos Disponibles</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {% for rubro in rubros %}
+                        {% if rubro.activo %}
+                        <button type="button" onclick="agregarAlTicket('{{ rubro.id }}', '{{ rubro.nombre }}')"
+                            class="h-20 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-700 text-center p-2 hover:bg-orange-50 hover:border-orange-300 active:scale-95 transition flex flex-col justify-center items-center gap-1 shadow-sm">
+                            <span class="text-sm uppercase tracking-wide truncate w-full text-center">{{ rubro.nombre }}</span>
+                            <span class="text-[10px] text-slate-400 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-100">+ Añadir</span>
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 lg:sticky lg:top-6">
+            <form action="{% url 'registrar_consumo' colegio.slug %}" method="POST" id="form-ticket" class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col min-h-[480px] border border-slate-950">
+                {% csrf_token %}
+                <input type="hidden" name="estudiante_id" id="hidden-estudiante-id" required>
+
+                <div class="border-b border-slate-800 pb-4 mb-4">
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 block">Consumidor</span>
+                    <h2 id="ticket-cliente-nombre" class="text-xl font-black text-white mt-1 italic">Ningún Alumno Seleccionado</h2>
+                    <div class="flex justify-between items-center mt-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                        <span class="text-xs text-slate-400 font-bold">Saldo Prepago:</span>
+                        <span id="ticket-cliente-saldo-label" class="font-black text-orange-400 text-base">0.00 BS</span>
+                    </div>
+                </div>
+
+                <div class="flex-grow overflow-y-auto max-h-64 pr-1 space-y-2 custom-scrollbar" id="ticket-items-contenedor">
+                    <div id="ticket-vacio-msg" class="text-center py-12 text-slate-500 text-sm italic">
+                        El ticket está vacío.
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-4 mt-4 space-y-3">
+                    <div class="flex justify-between items-end border-b border-dashed border-slate-800 pb-3">
+                        <span class="text-sm font-black uppercase text-slate-400">Total a Pagar:</span>
+                        <span id="label-monto-total" class="text-3xl font-black text-emerald-400">0.00 <span class="text-sm">BS</span></span>
+                    </div>
+                    <div id="alerta-saldo-insuficiente" class="hidden bg-rose-950/80 border border-rose-800 text-rose-300 p-3 rounded-xl text-xs font-bold text-center animate-pulse">
+                        ⚠️ SALDO INSUFICIENTE EN BILLETERA.
+                    </div>
+                    <button type="submit" id="btn-cobrar" disabled
+                        class="w-full bg-slate-700 text-slate-500 text-lg font-black py-4 rounded-2xl cursor-not-allowed transition-all uppercase tracking-wide">
+                        Confirmar Consumo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="tab-catalogo" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm dynamic-tab space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-black text-slate-800">Administración de Rubros</h2>
+                <p class="text-xs text-slate-400">Agrega, edita o pausa los productos de la cantina</p>
+            </div>
+            <button onclick="toggleFormularioRubro()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-black transition shadow-sm">
+                ➕ Nuevo Producto
+            </button>
+        </div>
+
+        <div id="wrapper-formulario-rubro" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 animate-fadeIn">
+            <form method="POST" action="{% url 'guardar_rubro_cantina' colegio.slug %}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                {% csrf_token %}
+                <input type="hidden" name="rubro_id" id="form-rubro-id">
+                <div>
+                    <label class="block text-xs font-black text-slate-600 uppercase mb-1">Nombre del Rubro</label>
+                    <input type="text" name="nombre" id="form-rubro-nombre" required
+                        class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm font-bold focus:outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-600 uppercase mb-1">Estado en Catálogo</label>
+                    <select name="activo" id="form-rubro-activo" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm font-bold focus:outline-none focus:border-blue-600">
+                        <option value="true">Activo (Visible en Recreo)</option>
+                        <option value="false">Inactivo (Pausado)</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-black transition">
+                        Guardar
+                    </button>
+                    <button type="button" onclick="toggleFormularioRubro()" class="bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-400">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-wider border-b border-slate-200">
+                        <th class="p-4">Nombre del Producto</th>
+                        <th class="p-4 text-center">Estado actual</th>
+                        <th class="p-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
+                    {% for rubro in rubros %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-bold text-slate-900 uppercase">{{ rubro.nombre }}</td>
+                        <td class="p-4 text-center">
+                            {% if rubro.activo %}
+                            <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-200">Visible</span>
+                            {% else %}
+                            <span class="bg-slate-100 text-slate-400 px-2.5 py-1 rounded-full text-xs font-bold border border-slate-200">Pausado</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-right space-x-2">
+                            <button type="button" onclick="cargarRubroEnFormulario('{{ rubro.id }}', '{{ rubro.nombre }}', '{{ rubro.activo|yesno:'true,false' }}')"
+                                class="text-blue-600 hover:text-blue-800 text-xs font-black uppercase">
+                                ✏️ Editar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="p-8 text-center text-slate-400 italic">No hay productos creados en el menú.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- LÓGICA DE CONTROL DE PESTAÑAS (TABS) ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.dynamic-tab').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+
+        const btnVentas = document.getElementById('btn-tab-ventas');
+        const btnCat = document.getElementById('btn-tab-catalogo');
+
+        if(tabId === 'tab-ventas') {
+            btnVentas.className = "flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-black transition-all flex items-center justify-center gap-2 bg-white text-slate-900 shadow-sm";
+            btnCat.className = "flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800";
+        } else {
+            btnCat.className = "flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-black transition-all flex items-center justify-center gap-2 bg-white text-slate-900 shadow-sm";
+            btnVentas.className = "flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800";
+        }
+    }
+
+    // --- MANEJO DEL FORMULARIO CRUD INLINE ---
+    function toggleFormularioRubro() {
+        const wrapper = document.getElementById('wrapper-formulario-rubro');
+        wrapper.classList.toggle('hidden');
+        if(wrapper.classList.contains('hidden')) {
+            document.getElementById('form-rubro-id').value = '';
+            document.getElementById('form-rubro-nombre').value = '';
+            document.getElementById('form-rubro-activo').value = 'true';
+        }
+    }
+
+    function cargarRubroEnFormulario(id, nombre, activo) {
+        document.getElementById('form-rubro-id').value = id;
+        document.getElementById('form-rubro-nombre').value = nombre;
+        document.getElementById('form-rubro-activo').value = activo;
+        
+        const wrapper = document.getElementById('wrapper-formulario-rubro');
+        wrapper.classList.remove('hidden');
+        wrapper.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- VARIABLES DE OPERACIÓN EN VIVO (POS RECREO) ---
+    let estudianteSeleccionado = null;
+    let saldoEstudiante = 0.00;
+    let carrito = {};
+
+    const buscador = document.getElementById('buscador-estudiante');
+    const listaEstudiantes = document.getElementById('lista-estudiantes');
+
+    // Buscador instantáneo de alumnos
+    buscador.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const opciones = document.querySelectorAll('.opcion-estudiante');
+        let coincidencias = 0;
+
+        if (query.length === 0) {
+            listaEstudiantes.classList.add('hidden');
+            return;
+        }
+        opciones.forEach(opc => {
+            if (opc.textContent.toLowerCase().includes(query)) {
+                opc.classList.remove('hidden');
+                coincidencias++;
+            } else {
+                opc.classList.add('hidden');
+            }
+        });
+        if (coincidencias > 0) listaEstudiantes.classList.remove('hidden');
+        else listaEstudiantes.classList.add('hidden');
+    });
+
+    document.querySelectorAll('.opcion-estudiante').forEach(btn => {
+        btn.addEventListener('click', function() {
+            estudianteSeleccionado = this.getAttribute('data-id');
+            saldoEstudiante = parseFloat(this.getAttribute('data-saldo'));
+            const nombre = this.getAttribute('data-nombre');
+
+            document.getElementById('hidden-estudiante-id').value = estudianteSeleccionado;
+            document.getElementById('ticket-cliente-nombre').innerText = nombre;
+            document.getElementById('ticket-cliente-saldo-label').innerText = saldoEstudiante.toFixed(2) + " BS";
+
+            listaEstudiantes.classList.add('hidden');
+            buscador.value = nombre;
+
+            actualizarTotalesEIntegridad();
+        });
+    });
+
+    window.agregarAlTicket = function(rubroId, rubroNombre) {
+        if (carrito[rubroId]) {
+            carrito[rubroId].cantidad += 1;
+        } else {
+            carrito[rubroId] = { nombre: rubroNombre, cantidad: 1, precio: 0.00 };
+        }
+        renderizarTicket();
+    };
+
+    function renderizarTicket() {
+        const contenedor = document.getElementById('ticket-items-contenedor');
+        const msgVacio = document.getElementById('ticket-vacio-msg');
+        
+        contenedor.querySelectorAll('.fila-item-ticket').forEach(f => f.remove());
+
+        const keys = Object.keys(carrito);
+        if (keys.length === 0) {
+            msgVacio.classList.remove('hidden');
+            actualizarTotalesEIntegridad();
+            return;
+        }
+        msgVacio.classList.add('hidden');
+
+        keys.forEach(id => {
+            const item = carrito[id];
+            const div = document.createElement('div');
+            div.className = 'fila-item-ticket bg-slate-800 p-3 rounded-xl flex flex-col gap-2 border border-slate-700/50';
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="font-black text-sm text-slate-200 uppercase truncate w-36">${item.nombre}</span>
+                    <button type="button" onclick="eliminarItem('${id}')" class="text-slate-500 hover:text-rose-400 text-xs font-bold transition">×</button>
+                </div>
+                <div class="grid grid-cols-12 gap-2 items-center">
+                    <input type="hidden" name="rubro_id" value="${id}">
+                    <div class="col-span-5 flex items-center bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
+                        <button type="button" onclick="cambiarCantidad('${id}', -1)" class="px-2 py-0.5 text-slate-400 font-bold hover:bg-slate-700">-</button>
+                        <input type="number" name="cantidad" value="${item.cantidad}" oninput="modificarCantidadDirecta('${id}', this.value)"
+                            class="w-full bg-transparent text-center text-white font-black text-sm focus:outline-none">
+                        <button type="button" onclick="cambiarCantidad('${id}', 1)" class="px-2 py-0.5 text-slate-400 font-bold hover:bg-slate-700">+</button>
+                    </div>
+                    <div class="col-span-7 relative flex items-center">
+                        <span class="absolute left-2 text-slate-500 text-xs font-bold">Bs.</span>
+                        <input type="number" step="0.01" name="precio" value="${item.precio > 0 ? item.precio : ''}" placeholder="Precio"
+                            oninput="modificarPrecio('${id}', this.value)" required
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2 py-1 text-right text-emerald-400 font-black text-sm focus:outline-none">
+                    </div>
+                </div>
+            `;
+            contenedor.appendChild(div);
+        });
+        actualizarTotalesEIntegridad();
+    }
+
+    window.cambiarCantidad = function(id, delta) {
+        if (!carrito[id]) return;
+        carrito[id].cantidad += delta;
+        if (carrito[id].cantidad <= 0) delete carrito[id];
+        renderizarTicket();
+    };
+
+    window.modificarCantidadDirecta = function(id, valor) {
+        let n = parseInt(valor);
+        if (isNaN(n) || n <= 0) n = 1;
+        carrito[id].cantidad = n;
+        actualizarTotalesEIntegridad();
+    };
+
+    window.modificarPrecio = function(id, valor) {
+        let p = parseFloat(valor);
+        if (isNaN(p) || p < 0) p = 0.00;
+        carrito[id].precio = p;
+        actualizarTotalesEIntegridad();
+    };
+
+    window.eliminarItem = function(id) {
+        delete carrito[id];
+        renderizarTicket();
+    };
+
+    function actualizarTotalesEIntegridad() {
+        let totalItems = 0;
+        let totalMonto = 0.00;
+
+        Object.keys(carrito).forEach(id => {
+            totalItems += carrito[id].cantidad;
+            totalMonto += (carrito[id].cantidad * carrito[id].precio);
+        });
+
+        document.getElementById('label-monto-total').innerText = totalMonto.toFixed(2) + " BS";
+        const btnCobrar = document.getElementById('btn-cobrar');
+        const alertaSaldo = document.getElementById('alerta-saldo-insuficiente');
+
+        if (estudianteSeleccionado && totalItems > 0 && totalMonto > 0) {
+            if (saldoEstudiante >= totalMonto) {
+                btnCobrar.removeAttribute('disabled');
+                btnCobrar.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-black py-4 rounded-2xl cursor-pointer transition-all text-center shadow-lg uppercase tracking-wide";
+                alertaSaldo.classList.add('hidden');
+            } else {
+                btnCobrar.setAttribute('disabled', 'true');
+                btnCobrar.className = "w-full bg-rose-900/50 text-rose-300/40 text-lg font-black py-4 rounded-2xl cursor-not-allowed text-center uppercase tracking-wide";
+                alertaSaldo.classList.remove('hidden');
+            }
+        } else {
+            btnCobrar.setAttribute('disabled', 'true');
+            btnCobrar.className = "w-full bg-slate-700 text-slate-500 text-lg font-black py-4 rounded-2xl cursor-not-allowed text-center uppercase tracking-wide";
+            alertaSaldo.classList.add('hidden');
+        }
+    }
+
+    setTimeout(() => {
+        const msgs = document.querySelector('.implementation-messages');
+        if(msgs) msgs.remove();
+    }, 4000);
+
+    // --- DETECTAR PESTAÑA ACTIVA AL CARGAR LA PÁGINA ---
+    document.addEventListener("DOMContentLoaded", function() {
+        // Leemos los parámetros de la URL actual
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabActiva = urlParams.get('tab');
+
+        // Si el parámetro 'tab' dice 'catalogo', forzamos el cambio de pestaña
+        if (tabActiva === 'catalogo') {
+            switchTab('tab-catalogo');
+        } else {
+            switchTab('tab-ventas'); // Pestaña por defecto
+        }
+    });
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+</style>
+{% endblock %}

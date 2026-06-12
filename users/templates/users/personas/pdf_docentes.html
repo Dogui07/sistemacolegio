@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Personal Docente</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1.5cm;
+            margin-bottom: 2cm; /* Dejamos espacio abajo para el pie de página */
+        }
+        /* Reemplazo seguro para el pie de página en xhtml2pdf */
+        .pdf-footer {
+            position: fixed;
+            bottom: -0.5cm;
+            left: 0px;
+            right: 0px;
+            text-align: right;
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            color: #64748b;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            color: #1e293b;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .badge {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        .badge-activo {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        .badge-inactivo {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .data-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .text-mono {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .text-bold {
+            font-weight: bold;
+        }
+        .text-upper {
+            text-transform: uppercase;
+        }
+        .text-muted {
+            color: #64748b;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pdf-footer">
+        Página <pdf:pagenumber/> de <pdf:pagecount/>
+    </div>
+
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="title">Personal Docente</div>
+                <div class="subtitle">{{ colegio.nombre }}</div>
+            </td>
+            <td style="text-align: right; vertical-align: top;">
+                <span class="badge {% if estado_actual == 'ACTIVO' %}badge-activo{% else %}badge-inactivo{% endif %}">
+                    {{ estado_actual }}S
+                </span>
+                <div class="text-muted" style="margin-top: 8px;">Generado el: {{ fecha|date:"d/m/Y H:i" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Cédula</th>
+                <th style="width: 35%;">Docente / Correo</th>
+                <th style="width: 20%;">Especialidad</th>
+                <th style="width: 18%;">Profesión</th>
+                <th style="width: 12%;">F. Inicio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for docente in docentes %}
+            <tr>
+                <td class="text-mono text-bold">{{ docente.cedula }}</td>
+                <td>
+                    <div class="text-bold text-upper">{{ docente.nombre }} {{ docente.apellido }}</div>
+                    <div class="text-muted" style="font-style: italic;">{{ docente.usuario.email|default:"-" }}</div>
+                </td>
+                <td class="text-bold text-upper" style="color: #2563eb;">
+                    {{ docente.detalle_docente.especialidad|default:"SIN ASIGNAR" }}
+                </td>
+                <td class="text-upper">
+                    {{ docente.profesion|default:"-" }}
+                </td>
+                <td class="text-mono">
+                    {{ docente.detalle_docente.fecha_inicio|date:"d/m/Y"|default:"-" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">
+                    No se encontraron registros de personal docente bajo los criterios seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

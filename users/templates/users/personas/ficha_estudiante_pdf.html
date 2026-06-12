@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ficha Estudiante - {{ estudiante.cedula }}</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 2cm;
+        }
+        body { font-family: Helvetica, sans-serif; font-size: 12px; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        h1 { font-size: 18px; margin: 0; text-transform: uppercase; }
+        h2 { font-size: 14px; margin-top: 5px; color: #555; }
+        .section-title { background-color: #f2f2f2; padding: 5px; font-weight: bold; margin-top: 20px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .label { font-weight: bold; width: 30%; color: #555; text-transform: uppercase; font-size: 10px;}
+        .value { width: 70%; text-transform: uppercase; font-size: 11px;}
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <table style="width: 100%; border: none; margin-bottom: 0;">
+            <tr>
+                <td style="width: 75%; text-align: left; border: none;">
+                    <h1>{{ colegio.nombre }}</h1>
+                    <h2>Ficha Integral del Estudiante</h2>
+                    <p>Período: {{ ano_activo.nombre|default:"-" }}</p>
+                </td>
+                <td style="width: 25%; text-align: right; border: none;">
+                    {% if foto_path %}
+                        <img src="{{ foto_path }}" style="width: 80px; height: 80px; border: 1px solid #ccc; border-radius: 5px;">
+                    {% else %}
+                        <div style="width: 80px; height: 80px; border: 1px dashed #999; text-align: center; line-height: 80px; font-size: 10px; color: #999; display: inline-block;">
+                            SIN FOTO
+                        </div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-title">DATOS DEL ESTUDIANTE</div>
+    <table>
+        <tr>
+            <td class="label">Nombres y Apellidos:</td>
+            <td class="value">{{ estudiante.nombre }} {{ estudiante.apellido }}</td>
+        </tr>
+        <tr>
+            <td class="label">Cédula / ID:</td>
+            <td class="value">{{ estudiante.cedula }}</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha de Nac. / Edad:</td>
+            <td class="value">{{ estudiante.fecha_nacimiento|date:"d/m/Y" }} ({{ estudiante.edad }} Años)</td>
+        </tr>
+        <tr>
+            <td class="label">Grado y Sección:</td>
+            <td class="value">{{ estudiante_detalle.seccion.grado.nombre|default:"-" }} - Sección {{ estudiante_detalle.seccion.nombre|default:"-" }}</td>
+        </tr>
+    </table>
+
+    <div class="section-title">DATOS DEL REPRESENTANTE LEGAL</div>
+    {% if representante %}
+    <table>
+        <tr>
+            <td class="label">Nombres y Apellidos:</td>
+            <td class="value">{{ representante.nombre }} {{ representante.apellido }}</td>
+        </tr>
+        <tr>
+            <td class="label">Parentesco:</td>
+            <td class="value">{{ parentesco|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Cédula:</td>
+            <td class="value">{{ representante.cedula }}</td>
+        </tr>
+        <tr>
+            <td class="label">Teléfono:</td>
+            <td class="value">{{ representante.telefono|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Correo Electrónico:</td>
+            <td class="value">{{ representante.usuario.email|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Dirección de Habitación:</td>
+            <td class="value">{{ representante.direccion|default:"-" }}</td>
+        </tr>
+    </table>
+    {% else %}
+        <p>No posee un representante asignado en el sistema.</p>
+    {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+{% extends "users/base_dashboard.html" %}
+
+{% block content_dashboard %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Roles y Permisos</h1>
+            <p class="text-slate-500 text-sm">Define qué puede hacer cada grupo de trabajo en el Colegio.</p>
+        </div>
+        <a href="{% url 'crear_rol' colegio.slug %}" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+            <i class="fas fa-plus mr-2"></i> NUEVO ROL
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for rol in roles %}
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 hover:shadow-xl hover:border-blue-300 transition-all group">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition">
+                    <i class="fas fa-id-badge"></i>
+                </div>
+                <span class="text-[10px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">
+                    ID: {{ rol.id }}
+                </span>
+            </div>
+            
+            <h3 class="text-xl font-bold text-slate-800 mb-1">{{ rol.nombre }}</h3>
+            <p class="text-slate-500 text-xs mb-6">Permisos asignados para este perfil en la institución.</p>
+
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center text-xs font-medium text-slate-600">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i> Gestión de Notas
+                </div>
+                <div class="flex items-center text-xs font-medium text-slate-600">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i> Ver Reportes
+                </div>
+                {% if rol.nombre == 'Super' or rol.nombre == 'Admin' %}
+                <div class="flex items-center text-xs font-medium text-slate-600">
+                    <i class="fas fa-shield-alt text-blue-500 mr-2"></i> Acceso Total
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="flex gap-2 border-t border-slate-50 pt-4">
+                <a href="#" class="flex-1 bg-slate-100 text-slate-600 text-center py-2 rounded-xl text-xs font-bold hover:bg-blue-50 hover:text-blue-600 transition">
+                    <i class="fas fa-edit mr-1"></i> EDITAR
+                </a>
+                <button class="w-10 h-10 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-slate-100 border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
+            <i class="fas fa-lock text-4xl text-slate-300 mb-4"></i>
+            <p class="text-slate-500 font-medium">No hay roles configurados para este colegio.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-7xl mx-auto">
+    
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase">Gestión de Estudiantes</h1>
+            <p class="text-sm text-slate-500">{{ colegio.nombre }}</p>
+        </div>
+        
+        <div class="flex gap-3">
+            {% if request.user.rol.nombre == 'Admin' or request.user.rol.nombre == 'Super' %}
+            <button type="button" onclick="abrirModalMasiva()" 
+                    class="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition flex items-center" title="Carga Masiva">
+                <i class="fas fa-file-excel mr-2"></i> Carga Masiva
+            </button>
+
+            <a href="{% url 'crear_estudiante' colegio.slug %}" 
+               class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-plus mr-2"></i> Nuevo Estudiante
+            </a>
+            {% endif %}
+
+            <a href="{% url 'exportar_estudiantes_excel' colegio.slug %}" 
+               class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista Excel">
+                <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-excel mr-2 text-emerald-600"></i> Excel
+            </a>
+            
+            <a href="{% url 'exportar_estudiantes_pdf' colegio.slug %}" target="_blank"
+               class="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-200 transition flex items-center" title="Descargar Lista PDF">
+                <i class="fas fa-download text-slate-500"></i><i class="fas fa-file-pdf mr-2 text-red-600"></i> PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="flex items-center justify-between mb-6 border-b border-slate-100">
+        <div class="flex gap-8">
+            <a href="?tab=activos{% if query %}&q={{ query }}{% endif %}{% if anio_actual %}&anio_escolar={{ anio_actual }}{% endif %}{% if nivel_actual %}&nivel={{ nivel_actual }}{% endif %}{% if grado_actual %}&grado={{ grado_actual }}{% endif %}{% if seccion_actual %}&seccion={{ seccion_actual }}{% endif %}&order={{ order_by }}&per_page={{ per_page }}" 
+               class="pb-4 px-2 text-sm font-bold transition-all relative {% if pestana == 'activos' %}text-blue-600{% else %}text-slate-400 hover:text-slate-600{% endif %}">
+                INSCRITOS (ACTIVOS)
+                {% if pestana == 'activos' %}
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-full"></div>
+                {% endif %}
+            </a>
+
+            <a href="?tab=sin_inscripcion{% if query %}&q={{ query }}{% endif %}{% if anio_actual %}&anio_escolar={{ anio_actual }}{% endif %}{% if nivel_actual %}&nivel={{ nivel_actual }}{% endif %}{% if grado_actual %}&grado={{ grado_actual }}{% endif %}{% if seccion_actual %}&seccion={{ seccion_actual }}{% endif %}&order={{ order_by }}&per_page={{ per_page }}" 
+               class="pb-4 px-2 text-sm font-bold transition-all relative {% if pestana == 'sin_inscripcion' %}text-amber-600{% else %}text-slate-400 hover:text-slate-600{% endif %}">
+                SIN INSCRIPCIÓN (FLOTANTES)
+                {% if pestana == 'sin_inscripcion' %}
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-amber-600 rounded-full"></div>
+                {% endif %}
+            </a>
+
+            <a href="?tab=inactivos{% if query %}&q={{ query }}{% endif %}{% if anio_actual %}&anio_escolar={{ anio_actual }}{% endif %}{% if nivel_actual %}&nivel={{ nivel_actual }}{% endif %}{% if grado_actual %}&grado={{ grado_actual }}{% endif %}{% if seccion_actual %}&seccion={{ seccion_actual }}{% endif %}&order={{ order_by }}&per_page={{ per_page }}" 
+               class="pb-4 px-2 text-sm font-bold transition-all relative {% if pestana == 'inactivos' %}text-red-600{% else %}text-slate-400 hover:text-slate-600{% endif %}">
+                INACTIVOS (RETIRADOS)
+                {% if pestana == 'inactivos' %}
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-red-600 rounded-full"></div>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6">
+        <form method="GET" id="form-filtros" class="flex flex-col gap-4">
+            <input type="hidden" name="tab" value="{{ pestana }}">
+            
+            <div class="flex flex-col lg:flex-row gap-4 items-end">
+                <div class="relative flex-1 w-full">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Buscar Estudiante</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Buscar por cédula, nombre o apellido..." 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm text-slate-700 font-medium transition-all">
+                    </div>
+                </div>
+
+                <div class="w-full lg:w-60">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Año Escolar Contexto</label>
+                    <select name="anio_escolar" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        {% for a in anios_escolares %}
+                            <option value="{{ a.id }}" {% if anio_actual == a.id|stringformat:"s" %}selected{% endif %}>{{ a.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="w-full lg:w-60">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nivel Educativo</label>
+                    <select name="nivel" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        <option value="">TODOS LOS NIVELES</option>
+                        {% for n in niveles %}
+                            <option value="{{ n }}" {% if nivel_actual == n %}selected{% endif %}>{{ n|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <hr class="border-slate-100/80 my-1">
+
+            <div class="flex flex-col sm:flex-row flex-wrap lg:flex-nowrap gap-4 items-end">
+                <div class="flex-1 min-w-[120px] w-full">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Grado / Año</label>
+                    <select name="grado" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        <option value="">TODOS</option>
+                        {% for g in grados %}
+                            <option value="{{ g }}" {% if grado_actual == g %}selected{% endif %}>{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[100px] w-full">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Sección</label>
+                    <select name="seccion" id="seccion-select" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        <option value="">TODAS</option>
+                        {% for s in secciones %}
+                            <option value="{{ s.id }}" data-grado="{{ s.grado }}" {% if seccion_actual == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.nombre|upper }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[140px] w-full">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Ordenar por</label>
+                    <select name="order" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        <option value="apellido" {% if order_by == 'apellido' %}selected{% endif %}>APELLIDO</option>
+                        <option value="nombre" {% if order_by == 'nombre' %}selected{% endif %}>NOMBRE</option>
+                        <option value="cedula" {% if order_by == 'cedula' %}selected{% endif %}>CÉDULA</option>
+                    </select>
+                </div>
+
+                <div class="w-full sm:w-36">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Mostrar</label>
+                    <select name="per_page" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                        <option value="10" {% if per_page == '10' %}selected{% endif %}>10 FILAS</option>
+                        <option value="25" {% if per_page == '25' %}selected{% endif %}>25 FILAS</option>
+                        <option value="50" {% if per_page == '50' %}selected{% endif %}>50 FILAS</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                    <button type="submit" class="flex-1 sm:flex-none bg-slate-800 text-white px-5 h-[46px] rounded-xl font-bold hover:bg-slate-900 focus:ring-2 focus:ring-slate-400 transition-all text-xs uppercase flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-filter"></i>
+                        <span>Filtrar</span>
+                    </button>
+                    <a href="{% url 'gestionar_estudiantes' colegio.slug %}" class="w-12 h-[46px] bg-slate-100 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50/50 border border-transparent hover:border-red-100 transition-all flex items-center justify-center shadow-sm">
+                        <i class="fas fa-sync-alt text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest border-b border-slate-100">
+                <tr>
+                    <th class="px-6 py-4">Estudiante</th>
+                    <th class="px-6 py-4">Cédula</th>
+                    <th class="px-6 py-4">Grado / Sección</th>
+                    <th class="px-6 py-4">Estado Pago</th>
+                    <th class="px-6 py-4 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for estudiante in estudiantes %}
+                <tr class="hover:bg-slate-50/50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                {% if estudiante.foto %}
+                                    <img src="{{ estudiante.foto.url }}" class="w-full h-full rounded-full object-cover">
+                                {% else %}
+                                    <i class="fas fa-user text-lg"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800 uppercase">{{ estudiante.apellido }}, {{ estudiante.nombre }}</p>
+                                <p class="text-[10px] text-slate-400">
+                                    {% if estudiante.inscripciones.first %}
+                                        Último año: {{ estudiante.inscripciones.first.anio_escolar.nombre }}
+                                    {% else %}
+                                        Nuevo Ingreso
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-sm font-medium text-slate-600">{{ estudiante.cedula }}</p>
+                        <p class="text-[10px] text-slate-400">{{ estudiante.fecha_nacimiento }}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% with inscripcion=estudiante.inscripciones.first %}
+                            {% if inscripcion %}
+                                {% if pestana == 'sin_inscripcion' %}
+                                    <span class="bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase" title="Último grado registrado en el historial">
+                                        Previo: {{ inscripcion.seccion.grado }} - {{ inscripcion.seccion.nombre }}
+                                    </span>
+                                {% else %}
+                                    <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">
+                                        {{ inscripcion.seccion.grado }} - {{ inscripcion.seccion.nombre }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase">
+                                    POR ASIGNAR</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if pestana == 'sin_inscripcion' %}
+                            <span class="text-amber-500 text-[10px] font-black flex items-center gap-1">
+                                <i class="fas fa-clock animate-pulse"></i> INSCRIPCIÓN PENDIENTE
+                            </span>
+                        {% else %}
+                            {% if estudiante.solvente %}
+                                <span class="text-emerald-500 text-[10px] font-black flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> SOLVENTE
+                                </span>
+                            {% else %}
+                                <span class="text-red-500 text-[10px] font-black flex items-center gap-1">
+                                    <i class="fas fa-exclamation-circle"></i> DEUDOR
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            {% if pestana == 'inactivos' %}
+                                <a href="{% url 'activar_estudiante' colegio.slug estudiante.id %}" 
+                                   class="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition">
+                                    REINCORPORAR
+                                </a>
+                            {% elif pestana == 'sin_inscripcion' %}
+                                <a href="{% url 'crear_inscripcion' colegio.slug estudiante.id %}" 
+                                   class="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-blue-700 transition shadow-md flex items-center gap-1">
+                                    <i class="fas fa-user-plus text-[9px]"></i> INSCRIBIR
+                                </a>
+
+                                <a href="{% url 'editar_estudiante' colegio.slug estudiante.id %}" title="Editar Datos"
+                                   class="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-200 transition shadow-sm">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
+                            {% else %}
+                                <form id="form-foto-{{ estudiante.id }}" action="{% url 'subir_foto_persona' colegio.slug estudiante.id %}" 
+                                    method="POST" enctype="multipart/form-data" class="hidden">
+                                    {% csrf_token %}
+                                    <input type="file" name="foto" id="input-foto-{{ estudiante.id }}" onchange="document.getElementById('form-foto-{{ estudiante.id }}').submit()">
+                                </form>
+
+                                <button type="button" onclick="document.getElementById('input-foto-{{ estudiante.id }}').click()" title="Subir Fotografía"
+                                class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition shadow-sm">
+                                    <i class="fas fa-camera text-xs"></i>
+                                </button>
+
+                                <button type="button" onclick="verFicha('{{ estudiante.id }}')" title="Ver Ficha"
+                                class="w-9 h-9 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-600 hover:text-white transition shadow-sm">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+
+                                <a href="{% url 'editar_estudiante' colegio.slug estudiante.id %}" title="Editar Estudiante"
+                                   class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
+                                
+                                <form action="{% url 'desactivar_estudiante' colegio.slug estudiante.id %}" method="POST" class="inline" title="Marcar como RETIRADO">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('¿Marcar estudiante como RETIRADO?')"
+                                            class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm">
+                                        <i class="fas fa-user-slash text-xs"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center">
+                        <i class="fas fa-users text-4xl text-slate-100 mb-3 block"></i>
+                        <p class="text-slate-400 text-sm font-medium italic">No se encontraron estudiantes en esta sección.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between px-4">
+        <p class="text-sm text-slate-500 font-medium">
+            Mostrando {{ estudiantes.start_index }} a {{ estudiantes.end_index }} de {{ estudiantes.paginator.count }} registros
+        </p>
+        
+        <div class="flex gap-2">
+            {% if estudiantes.has_previous %}
+                <a href="?page={{ estudiantes.previous_page_number }}&q={{ query }}&anio_escolar={{ anio_actual }}&nivel={{ nivel_actual }}&grado={{ grado_actual }}&seccion={{ seccion_actual }}&order={{ order_by }}&per_page={{ per_page }}&tab={{ pestana }}" 
+                   class="p-2 w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-blue-600 hover:text-white transition">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg border border-blue-100 text-sm flex items-center">
+                Página {{ estudiantes.number }}
+            </span>
+
+            {% if estudiantes.has_next %}
+                <a href="?page={{ estudiantes.next_page_number }}&q={{ query }}&anio_escolar={{ anio_actual }}&nivel={{ nivel_actual }}&grado={{ grado_actual }}&seccion={{ seccion_actual }}&order={{ order_by }}&per_page={{ per_page }}&tab={{ pestana }}" 
+                   class="p-2 w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-blue-600 hover:text-white transition">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'users/base_dashboard.html' %}
+{% block content_dashboard %}
+<div class="space-y-6">
+    <a href="{% url 'dashboard_docente' colegio.slug %}" class="text-sm font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1">← Volver al Panel</a>
+
+    <header class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">{{ asignacion.asignatura.nombre }}</h1>
+            <p class="text-slate-500">{{ seccion.grado }} - "{{ seccion.nombre }}" | Secundaria</p>
+        </div>
+
+        <a href="{% url 'reporte_final_curso' colegio.slug asignacion.id %}" class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center gap-1 shadow-sm">
+            📈 Ver Reporte Final (Todos los Lapsos)
+        </a>
+        
+        <div class="flex bg-slate-100 p-1 rounded-xl">
+            <a href="?lapso=1" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '1' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">1er Lapso</a>
+            <a href="?lapso=2" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '2' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">2do Lapso</a>
+            <a href="?lapso=3" class="px-3 py-1.5 rounded-lg text-xs font-bold {% if lapso_actual == '3' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500{% endif %}">3er Lapso</a>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Plan de Evaluación</h3>
+                <p class="text-3xl font-black text-slate-800 mt-2">{{ porcentaje_total }}% / 100%</p>
+            </div>
+            <a href="{% url 'gestionar_plan_evaluacion' colegio.slug asignacion.id %}?lapso={{ lapso_actual }}" class="mt-4 text-xs font-bold text-blue-600 hover:underline">
+                ⚙️ Configurar Plan de Lapso →
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4">📝 Cortes Evaluativos del Lapso</h3>
+        {% if plan_actividades %}
+            <div class="divide-y divide-slate-100">
+                {% for actividad in plan_actividades %}
+                <div class="py-4 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">{{ actividad.descripcion }}</h4>
+                        <p class="text-xs text-slate-400">Ponderación: <strong class="text-slate-600">{{ actividad.ponderacion }}%</strong></p>
+                    </div>
+                    <a href="{% url 'cargar_notas_actividad' colegio.slug asignacion.id actividad.id %}" class="bg-slate-950 text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-slate-800 transition">
+                        ✏️ Evaluar Estudiantes
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-slate-400 italic text-sm">
+                No has agregado actividades para este lapso todavía. Configura tu plan de evaluación primero.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

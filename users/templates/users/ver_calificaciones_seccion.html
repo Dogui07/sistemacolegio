@@ -1,0 +1,167 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-6xl mx-auto my-6 px-4">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+            <nav class="text-xs text-slate-500 mb-1">
+                <a href="#" class="hover:underline">Panel Administrativo</a> &gt; 
+                <span class="text-slate-800">Control de Calificaciones</span>
+            </nav>
+            <h1 class="text-2xl font-black text-slate-900 uppercase">
+                {{ seccion.grado }} - Sección "{{ seccion.nombre }}"
+            </h1>
+            <p class="text-xs font-bold text-slate-500 mt-0.5">
+                Nivel: <span class="uppercase text-slate-700">{{ seccion.nivel }}</span> | Docente Guía: {{ seccion.docente_guia.apellido|default:"Sin asignar" }}, {{ seccion.docente_guia.nombre|default:"" }}
+            </p>
+        </div>
+        <a href="#" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-sm flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Volver a Secciones
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Matrícula Total</span>
+                <span class="text-xl font-black text-slate-900">{{ total_estudiantes }} Alumnos</span>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Representantes Solventes</span>
+                <span class="text-xl font-black text-slate-900">{{ total_solventes }} Solventes</span>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fas fa-book"></i>
+            </div>
+            <div>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Plan de Estudios</span>
+                <span class="text-xl font-black text-slate-900">{{ cargas_academicas.count }} Asignaturas</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-slate-50/50">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-600">Sábana Digital de Rendimiento del Alumnado</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-[10px] font-black uppercase text-slate-500 tracking-wider border-b border-slate-200">
+                        <th class="px-4 py-3 w-12 text-center">N°</th>
+                        <th class="px-4 py-3">Apellidos y Nombres</th>
+                        <th class="px-4 py-3">Cédula</th>
+                        <th class="px-4 py-3 text-center">Estatus Admin</th>
+                        <th class="px-4 py-3 text-center">Rendimiento Académico</th>
+                        <th class="px-4 py-3 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {% for item in alumnos_rendimiento %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-4 text-center font-bold text-slate-400">{{ forloop.counter }}</td>
+                        <td class="px-4 py-4 font-black text-slate-900 uppercase">
+                            {{ item.estudiante.apellido }}, {{ item.estudiante.nombre }}
+                        </td>
+                        <td class="px-4 py-4 text-slate-500">{{ item.estudiante.cedula|default:"-" }}</td>
+                        <td class="px-4 py-4 text-center">
+                            {% if item.estudiante.esta_solvente %}
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded-md tracking-wider">Solvente</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 text-[9px] font-black uppercase rounded-md tracking-wider">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <button onclick="toggleNotas('notas-{{ item.estudiante.id }}')" 
+                                    class="inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold py-1 px-2.5 rounded-lg transition border border-emerald-200">
+                                <i class="fas fa-eye"></i> Ver Calificaciones
+                            </button>
+                        </td>
+                        <td class="px-4 py-4 text-center">
+                            <a href="{% url 'imprimir_boleta_admin' colegio_slug=colegio.slug estudiante_id=item.estudiante.id %}" 
+                               target="_blank"
+                               class="inline-flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold py-1 px-3 rounded-lg transition shadow-xs">
+                                <i class="fas fa-print text-[10px]"></i> Imprimir Boleta
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr id="notas-{{ item.estudiante.id }}" class="hidden bg-slate-50/60">
+                        <td colspan="6" class="px-6 py-4 border-l-4 border-emerald-500">
+                            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs max-w-4xl">
+                                <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex justify-between items-center">
+                                    <span class="text-[10px] font-black uppercase text-slate-500 tracking-wider">Cortes Evaluativos Cargados por los Docentes</span>
+                                    <span class="text-[10px] font-bold text-slate-400">Evaluación Cualitativa (I · EP · C)</span>
+                                </div>
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-wider border-b border-slate-100">
+                                            <th class="px-4 py-2">Asignatura / Área</th>
+                                            <th class="px-4 py-2">Profesor</th>
+                                            <th class="px-4 py-2 text-center w-24">1er Lapso</th>
+                                            <th class="px-4 py-2 text-center w-24">2do Lapso</th>
+                                            <th class="px-4 py-2 text-center w-24">3er Lapso</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                        {% for materia in item.materias %}
+                                        <tr>
+                                            <td class="px-4 py-2.5 font-bold text-slate-900 uppercase text-[11px]">{{ materia.asignatura }}</td>
+                                            <td class="px-4 py-2.5 text-slate-500 text-[11px]">{{ materia.docente }}</td>
+                                            <td class="px-4 py-2.5 text-center font-black text-sm">
+                                                <span class="{% if materia.lapso1 == 'C' %}text-emerald-600{% elif materia.lapso1 == 'EP' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                                                    {{ materia.lapso1 }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-2.5 text-center font-black text-sm">
+                                                <span class="{% if materia.lapso2 == 'C' %}text-emerald-600{% elif materia.lapso2 == 'EP' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                                                    {{ materia.lapso2 }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-2.5 text-center font-black text-sm">
+                                                <span class="{% if materia.lapso3 == 'C' %}text-emerald-600{% elif materia.lapso3 == 'EP' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                                                    {{ materia.lapso3 }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-slate-400 font-medium">
+                            <i class="fas fa-folder-open text-2xl block mb-2"></i> No hay alumnos inscritos activos en esta sección.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleNotas(rowId) {
+    const row = document.getElementById(rowId);
+    if (row.classList.contains('hidden')) {
+        row.classList.remove('hidden');
+    } else {
+        row.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

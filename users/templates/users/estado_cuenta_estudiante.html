@@ -1,0 +1,431 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block content_dashboard %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="mb-6">
+        {% if request.user.rol.nombre == 'Representante' %}
+            <a href="{% url 'dashboard_colegio' colegio.slug %}?representante_id={{ request.user.id }}" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Volver al Gestor de Pagos
+            </a>
+        {% else %}
+             <a href="{% url 'gestionar_pagos' colegio.slug %}?anio_escolar={{ anio_obj.id }}" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Volver al Gestor de Pagos
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="bg-white p-6 border border-slate-200 rounded-3xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <span class="px-2.5 py-1 text-[10px] tracking-wider font-black bg-blue-50 text-blue-600 rounded-md uppercase">ESTADO DE CUENTA</span>
+            <h1 class="text-2xl font-black text-slate-800 uppercase mt-1">{{ estudiante.apellido }}, {{ estudiante.nombre }}</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Cédula: <span class="font-mono text-slate-700 font-bold">V-{{ estudiante.cedula }}</span> • 
+                Período Escolar: <span class="font-bold text-slate-700">{{ anio_obj.nombre }}</span>
+            </p>
+            {% if representante_persona %}
+                <p class="text-xs text-slate-400 mt-1">Representante: <span class="uppercase font-semibold text-slate-600">{{ representante_persona.nombre }} {{ representante_persona.apellido }}</span></p>
+            {% endif %}
+        </div>
+        
+        <div class="flex gap-4 w-full md:w-auto">
+            <div class="bg-red-50/60 border border-red-100 rounded-2xl p-4 min-w-[140px] text-right">
+                <span class="text-[10px] font-black text-red-400 uppercase tracking-wider block">Deuda Pendiente</span>
+                <span class="text-lg font-black text-red-600 font-mono block mt-1">${{ total_por_pagar }}</span>
+            </div>
+            <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-4 min-w-[140px] text-right">
+                <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Total Solventado</span>
+                <span class="text-lg font-black text-emerald-600 font-mono block mt-1">${{ total_solventado }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden mb-8">
+        <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-sm font-black text-slate-700 uppercase tracking-tight flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle text-amber-500"></i> Compromisos de Pago por Solventar
+            </h2>
+            <span class="text-xs font-bold text-slate-500">Total Obligaciones: {{ pagos_vencidos.count|add:pagos_pendientes.count }}</span>
+        </div>
+        
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 text-[9px] uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                    <th class="px-6 py-3">Descripción de la Cuota</th>
+                    <th class="px-6 py-3">Vencimiento</th>
+                    <th class="px-6 py-3">Monto</th>
+                    <th class="px-6 py-3">Estatus</th>
+                    <th class="px-6 py-3 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for p in pagos_vencidos %}
+                <tr class="bg-red-50/20 hover:bg-red-50/40 transition">
+                    <td class="px-6 py-4">
+                        <p class="text-xs font-bold text-slate-800">{{ p.detalle }}</p>
+                        <p class="text-[10px] text-slate-400 font-mono">ID Cobro: #{{ p.id }}</p>
+                        {% if p.motivo %}
+                            <span class="inline-block mt-1 text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-200">
+                                📝 Modificado: {{ p.motivo|truncatechars:40 }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-xs font-bold text-red-600">{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+                    <td class="px-6 py-4 text-xs font-black text-slate-800 font-mono">${{ p.monto }}</td>
+                    <td class="px-6 py-4">
+                        {% if p.num_referencia %}
+                            <span class="px-2 py-0.5 text-[9px] font-black tracking-wider rounded bg-amber-100 text-amber-700 uppercase">EN REVISIÓN</span>
+                        {% else %}
+                            <span class="px-2 py-0.5 text-[9px] font-black tracking-wider rounded bg-red-100 text-red-700 uppercase">VENCIDO</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        {% if request.user.rol.nombre == 'Representante' %}
+                            {% if p.num_referencia %}
+                                <span class="px-2.5 py-1.5 text-[10px] font-black tracking-wider bg-amber-50 text-amber-600 border border-amber-200 rounded-xl inline-flex items-center gap-1 uppercase">
+                                    <i class="fas fa-clock text-amber-500 animate-pulse"></i> En Revisión
+                                </span>
+                            {% else %}
+                                <a href="{% url 'realizar_pago' colegio.slug %}?pago_id={{ p.id }}" class="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 transition shadow-sm inline-flex items-center gap-1">
+                                    <i class="fas fa-wallet"></i> Reportar Pago
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            {% if p.num_referencia %}
+                                <span class="px-2.5 py-1.5 text-[10px] font-black tracking-wider bg-amber-50 text-amber-600 border border-amber-200 rounded-xl inline-flex items-center gap-1 uppercase">
+                                    <i class="fas fa-clock text-amber-500 animate-pulse"></i> En Revisión
+                                </span>
+                            {% else %}
+                                <div class="flex justify-end gap-1.5">
+                                <a href="{% url 'realizar_pago' colegio.slug %}?estudiante_id={{ estudiante.id }}&pago_id={{ p.id }}" title="Registrar Pago de esta cuota" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition">
+                                    <i class="fas fa-cash-register text-[10px]"></i>
+                                </a>
+                                <button type="button" 
+                                    onclick="abrirModalEditar('{{ p.id }}', '{{ p.detalle }}', '{{ p.monto }}', '{{ p.fecha_vencimiento|date:'Y-m-d' }}', '{{ p.num_cuota }}')" 
+                                    title="Editar Cuota" 
+                                    class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-600 hover:text-white transition">
+                                    <i class="fas fa-edit text-[10px]"></i>
+                                </button>
+                                <button type="button" onclick="abrirModalAdmin('exonerar', '{{ p.id }}', '{{ p.detalle }}')" title="Exonerar Obligación" class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition">
+                                    <i class="fas fa-gift text-[10px]"></i>
+                                </button>
+                                <button type="button" onclick="abrirModalAdmin('anular', '{{ p.id }}', '{{ p.detalle }}')" title="Anular Cuota" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition">
+                                    <i class="fas fa-ban text-[10px]"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for p in pagos_pendientes %}
+                <tr class="hover:bg-slate-50/50 transition">
+                    <td class="px-6 py-4">
+                        <p class="text-xs font-bold text-slate-800">{{ p.detalle }}</p>
+                        <p class="text-[10px] text-slate-400 font-mono">ID Cobro: #{{ p.id }}</p>
+                        {% if p.motivo %}
+                            <span class="inline-block mt-1 text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-200">
+                                📝 Modificado: {{ p.motivo|truncatechars:40 }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-xs font-semibold text-slate-600">{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+                    <td class="px-6 py-4 text-xs font-black text-slate-800 font-mono">${{ p.monto }}</td>
+                    <td class="px-6 py-4">
+                        {% if p.num_referencia %}
+                            <span class="px-2 py-0.5 text-[9px] font-black tracking-wider rounded bg-amber-100 text-amber-700 uppercase">EN REVISIÓN</span>
+                        {% else %}
+                            <span class="px-2 py-0.5 text-[9px] font-black tracking-wider rounded bg-amber-100 text-amber-700 uppercase">PENDIENTE</span>
+                        {% endif %}
+                    </td>
+                   <td class="px-6 py-4 text-right">
+                        {% if request.user.rol.nombre == 'Representante' %}
+                            {% if p.num_referencia %}
+                                <span class="px-2.5 py-1.5 text-[10px] font-black tracking-wider bg-amber-50 text-amber-600 border border-amber-200 rounded-xl inline-flex items-center gap-1 uppercase">
+                                    <i class="fas fa-clock text-amber-500 animate-pulse"></i> En Revisión
+                                </span>
+                            {% else %}
+                                <a href="{% url 'realizar_pago' colegio.slug %}?pago_id={{ p.id }}" 
+                                class="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 transition shadow-sm inline-flex items-center gap-1">
+                                    <i class="fas fa-wallet"></i> Reportar Pago
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <div class="flex justify-end gap-1.5">
+                                <a href="{% url 'realizar_pago' colegio.slug %}?estudiante_id={{ estudiante.id }}&pago_id={{ p.id }}" title="Registrar Pago de esta cuota" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition">
+                                    <i class="fas fa-cash-register text-[10px]"></i>
+                                </a>
+                                <button type="button" 
+                                        onclick="abrirModalEditar('{{ p.id }}', '{{ p.detalle }}', '{{ p.monto }}', '{{ p.fecha_vencimiento|date:'Y-m-d' }}', '{{ p.num_cuota }}')" 
+                                        title="Editar Cuota" 
+                                        class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-600 hover:text-white transition">
+                                    <i class="fas fa-edit text-[10px]"></i>
+                                </button>
+                                <button type="button" onclick="abrirModalAdmin('exonerar', '{{ p.id }}', '{{ p.detalle }}')" title="Exonerar Obligación" class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition">
+                                    <i class="fas fa-gift text-[10px]"></i>
+                                </button>
+                                <button type="button" onclick="abrirModalAdmin('anular', '{{ p.id }}', '{{ p.detalle }}')" title="Anular Cuota" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition">
+                                    <i class="fas fa-ban text-[10px]"></i>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not pagos_vencidos and not pagos_pendientes %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-xs font-bold italic text-emerald-600 bg-emerald-50/10">
+                        <i class="fas fa-star mr-1"></i> ¡El alumno no posee saldos ni cuotas pendientes en este año escolar!
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
+            <h2 class="text-sm font-black text-slate-700 uppercase tracking-tight flex items-center gap-2">
+                <i class="fas fa-check-circle text-emerald-500"></i> Recibos Solventados / Pagados
+            </h2>
+        </div>
+        
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 text-[9px] uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                    <th class="px-6 py-3">Concepto</th>
+                    <th class="px-6 py-3">Referencia Bancaria</th>
+                    <th class="px-6 py-3">Fecha Procesado</th>
+                    <th class="px-6 py-3">Monto Cancelado</th>
+                    <th class="px-6 py-3 text-right">Comprobante / Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for p in pagos_pagados %}
+                    {% if p.num_referencia != 'EXONERADO' %}
+                        <tr class="hover:bg-slate-50/40 transition">
+                    {% else %}
+                        <tr class="bg-red-100/20 hover:bg-red-100/40 transition">
+                    {% endif %}        
+                    <td class="px-6 py-4">
+                        <p class="text-xs font-bold text-slate-700">{{ p.detalle }}</p>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-xs">
+                        {% if p.num_referencia == 'EXONERADO' %}
+                            <span class="px-2 py-0.5 text-[9px] font-black tracking-wider rounded bg-purple-100 text-purple-700 uppercase">✨ EXONERACIÓN</span>
+                            <p class="text-[10px] text-slate-400 font-mono">Por: {{ p.usuario.username|default:"Sistema" }}</p>
+                        {% else %}
+                            <span class="text-blue-600 font-bold">{{ p.num_referencia|default:"INTERNO" }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-xs font-medium text-slate-500">{{ p.fecha_pago|date:"d/m/Y" }}</td>
+                    {% if p.num_referencia != 'EXONERADO' %}
+                        <td class="px-6 py-4 text-xs font-black text-purple-600 font-mono">- ${{ p.monto }}</td>
+                    {% else %}
+                        <td class="px-6 py-4 text-xs font-black text-slate-400 font-mono">$0.00</td>
+                    {% endif %}
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            {% if p.comprobante %}
+                                <a href="{{ p.comprobante.url }}" target="_blank" title="Ver Captura" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                            {% else %}
+                                <span title="Sin Comprobante" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed">
+                                    <i class="fas fa-eye-slash text-xs"></i>
+                                </span>
+                            {% endif %}
+
+                            <div class="relative inline-block text-left group">
+                                <button type="button" title="Imprimir Documento" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition focus:outline-none">
+                                    <i class="fas fa-print text-xs"></i>
+                                </button>
+                                <div class="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 py-1.5 text-left">
+                                    <a href="{% url 'imprimir_recibo' colegio.slug p.id %}?tipo=completo" target="_blank" class="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 font-bold transition">
+                                        <i class="fas fa-file-pdf text-red-500 text-sm"></i> Formato Completo Digital
+                                    </a>
+                                    <a href="{% url 'imprimir_recibo' colegio.slug p.id %}?tipo=datos" target="_blank" class="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 font-bold transition">
+                                        <i class="fas fa-print text-blue-500 text-sm"></i> Solo Datos (Hoja Timbrada)
+                                    </a>
+                                </div>
+                            </div>
+
+                            {% if request.user.rol.nombre != 'Representante' and p.num_referencia != 'EXONERADO' %}
+                                <button type="button" onclick="abrirModalAdmin('anular', '{{ p.id }}', '{{ p.detalle }}')" title="Anular e Invalidar Cobro Liquido" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-600 hover:text-white transition">
+                                    <i class="fas fa-ban text-xs"></i>
+                                </button>
+                            {% else %}
+                                <span title="No se puede anular" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed">
+                                    <i class="fas fa-ban text-xs"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-10 text-center text-xs italic text-slate-400">
+                        Aún no se registran pagos liquidados para este periodo.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagos_anulados %}
+    <div class="bg-white border border-red-100 rounded-3xl shadow-sm overflow-hidden mt-8 opacity-85">
+        <div class="bg-red-50/40 border-b border-red-100 px-6 py-4">
+            <h2 class="text-sm font-black text-red-800 uppercase tracking-tight flex items-center gap-2">
+                <i class="fas fa-history text-red-500"></i> Historial de Cuotas Anuladas / Auditadas
+            </h2>
+            <p class="text-[11px] text-slate-500 mt-0.5">Operaciones invalidadas por la administración. No computan en deudas ni balances.</p>
+        </div>
+        
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-400 text-[9px] uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                    <th class="px-6 py-3">Concepto Original</th>
+                    <th class="px-6 py-3">Monto Invalido</th>
+                    <th class="px-6 py-3">Fecha de Anulación</th>
+                    <th class="px-6 py-3">Responsable de Auditoría</th>
+                    <th class="px-6 py-3">Motivo del Descarte</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-slate-50/30">
+                {% for p in pagos_anulados %}
+                <tr>
+                    <td class="px-6 py-4">
+                        <p class="text-xs font-bold text-slate-500 line-through">{{ p.detalle }}</p>
+                        <p class="text-[9px] text-slate-400 font-mono">ID Registro: #{{ p.id }} | Cuota: {{ p.num_cuota }}</p>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-bold text-slate-400 font-mono line-through">${{ p.monto }}</td>
+                    <td class="px-6 py-4 text-xs font-medium text-slate-500">{{ p.fecha_actualizacion|date:"d/m/Y h:i A" }}</td>
+                    <td class="px-6 py-4 text-xs font-black text-slate-700 uppercase">
+                        <i class="fas fa-user-shield text-slate-400 mr-1"></i>{{ p.usuario.username|default:"Sistema" }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="p-2 bg-red-50/60 rounded-xl border border-red-100/50 max-w-xs">
+                            <p class="text-[11px] font-medium text-red-700 italic">"{{ p.motivo|default:'No especificado' }}"</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<div id="modalAdminAuditoria" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-3xl max-w-md w-full shadow-xl transform transition-all">
+        <h3 id="adminModalTitle" class="text-base font-black text-slate-800 uppercase mb-1">Acción Requerida</h3>
+        <p class="text-xs text-slate-500 mb-4">Objetivo: <span id="adminModalPagoDetalle" class="font-bold text-slate-700 uppercase"></span></p>
+        
+        <form method="POST" action="{% url 'auditar_accion_pago' colegio.slug estudiante.id %}" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="pago_id" id="admin_pago_id">
+            <input type="hidden" name="accion" id="admin_accion">
+            
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Explique el Motivo de la Modificación (Obligatorio)</label>
+                <textarea name="motivo" id="admin_motivo" required rows="3" placeholder="Ej: Error en carga de monto / Alumno becado al 100% por rendimiento deportivo..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+                <button type="button" onclick="cerrarModalAdmin()" class="bg-slate-100 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-200 transition">Cancelar</button>
+                <button type="submit" id="adminSubmitBtn" class="text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalAdminEditar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-3xl max-w-md w-full shadow-xl transform transition-all">
+        <h3 class="text-base font-black text-slate-800 uppercase mb-1">🛠️ Editar Parámetros de la Cuota</h3>
+        <p class="text-xs text-slate-500 mb-4">Modifica los valores del cobro asignado al alumno.</p>
+        
+        <form id="formEditarPago" method="POST" action="" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Concepto / Descripción</label>
+                <input type="text" name="detalle" id="edit_detalle" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Monto ($)</label>
+                    <input type="number" step="0.01" name="monto" id="edit_monto" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">N° de Cuota</label>
+                    <input type="text" name="num_cuota" id="edit_num_cuota" required placeholder="Ej: 1 o UNICA" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Fecha de Vencimiento</label>
+                <input type="date" name="fecha_vencimiento" id="edit_fecha_vencimiento" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+
+            <div class="border-t border-slate-100 pt-3">
+                <label class="block text-[10px] font-black text-red-500 uppercase mb-1 tracking-wider">Motivo del Cambio (Auditoría Obligatoria)</label>
+                <textarea name="motivo" id="edit_motivo" required rows="2" placeholder="Explique detalladamente por qué corrige este cobro..." class="w-full p-3 bg-slate-50 border border-red-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+                <button type="button" onclick="cerrarModalEditar()" class="bg-slate-100 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-200 transition">Cancelar</button>
+                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function abrirModalAdmin(accion, id, detalle) {
+        document.getElementById('admin_pago_id').value = id;
+        document.getElementById('admin_accion').value = accion;
+        document.getElementById('adminModalPagoDetalle').innerText = detalle;
+        document.getElementById('admin_motivo').value = '';
+
+        const title = document.getElementById('adminModalTitle');
+        const submitBtn = document.getElementById('adminSubmitBtn');
+
+        if (accion === 'anular') {
+            title.innerText = '⚠️ Anular Compromiso o Recibo';
+            submitBtn.innerText = 'Confirmar Anulación';
+            submitBtn.className = 'bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md';
+        } else if (accion === 'exonerar') {
+            title.innerText = '✨ Exonerar / Perdonar Cuota';
+            submitBtn.innerText = 'Procesar Exoneración';
+            submitBtn.className = 'bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md';
+        }
+
+        document.getElementById('modalAdminAuditoria').classList.remove('hidden');
+    }
+    
+    function cerrarModalAdmin() {
+        document.getElementById('modalAdminAuditoria').classList.add('hidden');
+    }
+    
+    function abrirModalEditar(id, detalle, monto, fechaVencimiento, numCuota) {
+        document.getElementById('edit_detalle').value = detalle;
+        document.getElementById('edit_monto').value = monto;
+        document.getElementById('edit_fecha_vencimiento').value = fechaVencimiento;
+        document.getElementById('edit_num_cuota').value = numCuota;
+        document.getElementById('edit_motivo').value = '';
+
+        const urlBase = "{% url 'editar_pago' colegio.slug estudiante.id 99999 %}".replace('99999', id);
+        document.getElementById('formEditarPago').action = urlBase;
+
+        document.getElementById('modalAdminEditar').classList.remove('hidden');
+    }
+
+    function cerrarModalEditar() {
+        document.getElementById('modalAdminEditar').classList.add('hidden');
+    }
+</script>
+{% endblock %}
