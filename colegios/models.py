@@ -12,7 +12,7 @@ def ruta_portada_colegio(instance, filename): return generar_ruta(instance, file
 class Colegio(models.Model):
     nombre = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
-    logo = models.ImageField(upload_to=ruta_logo_colegio)
+    logo = models.ImageField(upload_to=ruta_logo_colegio, null=True, blank=True)
     favicon = models.ImageField(upload_to=ruta_favicon_colegio, null=True, blank=True)
     imagen_portada = models.ImageField(upload_to=ruta_portada_colegio, null=True, blank=True)
     # Lema o frase corta impactante
@@ -42,7 +42,7 @@ class Publicacion(models.Model):
     contenido = models.TextField()
     
     # AGREGAMOS blank=True y null=True
-    imagen = models.ImageField(upload_to='publicaciones/', blank=True, null=True) 
+    imagen = models.ImageField(upload_to='media/publicaciones/', blank=True, null=True) 
     
     tipo = models.CharField(max_length=10, choices=TIPOS, default='NOTICIA')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -59,7 +59,7 @@ class Publicacion(models.Model):
 class ImagenGaleria(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name='imagenes')
     titulo = models.CharField(max_length=100, blank=True)
-    imagen = models.ImageField(upload_to='galeria/')
+    imagen = models.ImageField(upload_to='media/galeria/', null=True, blank=True)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
