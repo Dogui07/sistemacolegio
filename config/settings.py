@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 import dj_database_url
 from pathlib import Path
+from dotenv import load_dotenv 
+
+# Carga las variables del archivo .env justo al iniciar
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -193,7 +197,7 @@ STORAGES = {
 STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dozrhfngb'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '861756927926695'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'vIxCvpekrNGTquLrSTy1RjK_mXA'),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }

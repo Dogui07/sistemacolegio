@@ -120,7 +120,7 @@ class RelacionFamiliar(models.Model):
     )
     parentesco = models.CharField(max_length=50)
 
-    # =====================================================================
+# =====================================================================
 # 1. CONTROL DE SALDOS (PREPAGO)
 # =====================================================================
 
@@ -144,7 +144,6 @@ class BilleteraCantina(models.Model):
 
     def __str__(self):
         return f"Billetera: {self.estudiante.apellido}, {self.estudiante.nombre} | Saldo: {self.saldo} BS"
-
 
 # =====================================================================
 # 2. CATÁLOGO DE RUBROS (PRECIOS DINÁMICOS)

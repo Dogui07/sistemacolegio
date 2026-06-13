@@ -37,6 +37,20 @@ from xhtml2pdf import pisa
 from django.urls import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
+def link_callback(uri, rel):
+    """
+    Convierte las rutas de los archivos en rutas locales para pisa.
+    """
+    # Si la URL es de Cloudinary (empieza con http), pisa la puede manejar
+    # Si es una URL interna, intenta resolverla
+    if uri.startswith(settings.MEDIA_URL):
+        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
+    elif uri.startswith(settings.STATIC_URL):
+        path = os.path.join(settings.STATIC_ROOT, uri.replace(settings.STATIC_URL, ""))
+    else:
+        return uri  # Devuelve la URL original si es de Cloudinary
+    return path
+
 @method_decorator(never_cache, name='dispatch')
 class ColegioLoginView(LoginView):
     template_name = 'users/login.html'
@@ -3314,7 +3328,7 @@ def imprimir_ficha_administrativo(request, colegio_slug, administrativo_id):
     
     template = get_template('users/personas/ficha_administrativo_pdf.html')
     html = template.render(context)
-    pisa_status = pisa.CreatePDF(html, dest=response)
+    pisa_status = pisa.CreatePDF(html, dest=response, link_callback=link_callback)
 
     if pisa_status.err:
         return HttpResponse('Ocurrió un error al generar el PDF', status=500)

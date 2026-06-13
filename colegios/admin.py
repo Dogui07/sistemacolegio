@@ -7,19 +7,19 @@ class ImagenGaleriaInline(admin.TabularInline): # Para mostrar las imágenes de 
     fields = ('titulo', 'imagen')
 
 # Registro del Colegio
-@admin.register(Colegio) # Decorador para registrar el modelo Colegio con su configuración personalizada
+@admin.register(Colegio) 
 class ColegioAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'imparte_inicial', 'imparte_primaria', 'imparte_secundaria')
-    list_editable = ('imparte_inicial', 'imparte_primaria', 'imparte_secundaria') # Permite editar desde la lista
-    prepopulated_fields = {'slug': ('nombre',)} # Autocompleta el slug mientras escribes el nombre
-    inlines = [ImagenGaleriaInline] # Para mostrar las imágenes de galería dentro del admin del Colegio
+    # He limpiado las líneas duplicadas aquí
     list_display = ('nombre', 'imparte_inicial', 'imparte_primaria', 'imparte_secundaria', 'tiene_cantina')
     list_editable = ('imparte_inicial', 'imparte_primaria', 'imparte_secundaria', 'tiene_cantina')
-
+    
+    prepopulated_fields = {'slug': ('nombre',)}
+    inlines = [ImagenGaleriaInline]
 
     fieldsets = (
         (None, {
-            'fields': ('nombre', 'slug', 'logo', 'color_principal')
+            # AQUÍ HEMOS AGREGADO 'favicon'
+            'fields': ('nombre', 'slug', 'logo', 'favicon', 'color_principal', 'imagen_portada')
         }),
         ('Niveles Educativos', {
             'fields': ('imparte_inicial', 'imparte_primaria', 'imparte_secundaria'),
@@ -29,7 +29,6 @@ class ColegioAdmin(admin.ModelAdmin):
             'fields': ('tiene_cantina',),
             'description': 'Active los módulos adicionales contratados por la institución.'
         }),
-
     )
 
 # Registro de las Publicaciones (Blog/Eventos)

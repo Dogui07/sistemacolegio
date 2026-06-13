@@ -1,0 +1,20 @@
+# Archivos de entorno y seguridad
+.env
+*.env
+
+# Entorno virtual
+env/
+venv/
+ENV/
+
+# Base de datos local (nunca subas tu base de datos de desarrollo)
+db.sqlite3
+
+# Archivos de Python (caché)
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de configuración de IDE (VS Code o PyCharm)
+.vscode/
+.idea/

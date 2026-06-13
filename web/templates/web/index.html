@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ colegio.nombre }} - Portal Oficial</title>
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}"> 
+    {% if colegio.favicon %}
+        <link rel="icon" type="image/png" href="{{ colegio.favicon.url }}">
+    {% else %}
+        <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    {% endif %} 
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -92,7 +96,13 @@
         <div class="flex space-x-6 overflow-x-auto pb-8 scrollbar-hide snap-x">
             {% for pub in colegio.publicaciones.all %}
             <div class="min-w-[300px] md:min-w-[400px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden snap-center hover:shadow-2xl transition">
-                <img src="{{ pub.imagen.url }}" class="h-48 w-full object-cover" alt="{{ pub.titulo }}">
+                {% if pub.imagen %}
+                    <img src="{{ pub.imagen.url }}" class="h-48 w-full object-cover" alt="{{ pub.titulo }}">
+                {% else %}
+                    <div class="h-48 w-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-400">Sin imagen</span>
+                    </div>
+                {% endif %}
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-secondary/20 text-secondary mb-3">
                         {{ pub.get_tipo_display }}

@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nombre', models.CharField(max_length=200)),
-                ('slug', models.SlugField(unique=True)),
+                ('slug', models.SlugField(unique=True)),                
+                ('favicon', models.ImageField(upload_to=colegios.models.ruta_favicon_colegio)),
                 ('logo', models.ImageField(upload_to=colegios.models.ruta_logo_colegio)),
                 ('informacion_publica', models.TextField()),
                 ('imagen_portada', models.ImageField(blank=True, null=True, upload_to=colegios.models.ruta_portada_colegio)),
