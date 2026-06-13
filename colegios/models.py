@@ -41,7 +41,6 @@ class Publicacion(models.Model):
     titulo = models.CharField(max_length=200)
     contenido = models.TextField()
     
-    # AGREGAMOS blank=True y null=True
     imagen = models.ImageField(upload_to='publicaciones/', blank=True, null=True) 
     
     tipo = models.CharField(max_length=10, choices=TIPOS, default='NOTICIA')
