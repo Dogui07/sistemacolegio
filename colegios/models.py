@@ -42,7 +42,7 @@ class Publicacion(models.Model):
     contenido = models.TextField()
     
     # AGREGAMOS blank=True y null=True
-    imagen = models.ImageField(upload_to='media/publicaciones/', blank=True, null=True) 
+    imagen = models.ImageField(upload_to='publicaciones/', blank=True, null=True) 
     
     tipo = models.CharField(max_length=10, choices=TIPOS, default='NOTICIA')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -59,7 +59,7 @@ class Publicacion(models.Model):
 class ImagenGaleria(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name='imagenes')
     titulo = models.CharField(max_length=100, blank=True)
-    imagen = models.ImageField(upload_to='media/galeria/', null=True, blank=True)
+    imagen = models.ImageField(upload_to='galeria/', null=True, blank=True)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
