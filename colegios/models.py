@@ -15,7 +15,7 @@ class Colegio(models.Model):
     logo = models.ImageField(upload_to=ruta_logo_colegio, null=True, blank=True)
     favicon = models.ImageField(upload_to=ruta_favicon_colegio, null=True, blank=True)
     imagen_portada = models.ImageField(upload_to=ruta_portada_colegio, null=True, blank=True)
-    # Lema o frase corta impactante
+    # Lema o frase corta impactante .
     lema = models.CharField(max_length=200, null=True, blank=True)
   
     # Colores principales para el diseño
