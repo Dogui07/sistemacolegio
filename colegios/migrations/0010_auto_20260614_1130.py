@@ -3,7 +3,7 @@ from django.core.management import call_command
 
 def cargar_datos(apps, schema_editor):
     # Esto busca el archivo data.json en la raíz del proyecto
-    call_command('loaddata', 'data.json')
+    # call_command('loaddata', 'data.json')
 
 class Migration(migrations.Migration):
 
