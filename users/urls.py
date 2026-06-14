@@ -5,6 +5,12 @@ from .views import ColegioLoginView, dashboard_colegio
 from . import views # Importamos las vistas desde el archivo views.py del mismo directorio
 
 urlpatterns = [
+    # 1. Página principal de todo el sistema (Home)
+    path('', views.home_index, name='home'), 
+
+    # 2. Página de inicio de un colegio específico (sin nada después del slug)
+    path('<slug:colegio_slug>/', views.colegio_home, name='colegio_home'),
+    
     path('<slug:colegio_slug>/login/', ColegioLoginView.as_view(), name='login_colegio'),
     path('<slug:colegio_slug>/logout/', views.logout_colegio, name='logout_colegio'),
     path('<slug:colegio_slug>/dashboard/', dashboard_colegio, name='dashboard_colegio'),
