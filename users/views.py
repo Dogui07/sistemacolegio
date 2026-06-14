@@ -67,7 +67,6 @@ class ColegioLoginView(LoginView):
         # Redirige al dashboard del colegio que acaba de loguearse
         slug = self.kwargs.get('colegio_slug')
         return f'/{slug}/dashboard/'
-        
     
 @never_cache
 def logout_colegio(request, colegio_slug):
