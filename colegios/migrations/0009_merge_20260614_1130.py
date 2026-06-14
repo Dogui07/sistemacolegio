@@ -5,8 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('colegios', '0004_alter_colegio_favicon bkp'),
+    dependencies = [,
         ('colegios', '0008_alter_colegio_logo_alter_imagengaleria_imagen'),
     ]
 
