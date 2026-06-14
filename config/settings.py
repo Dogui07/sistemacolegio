@@ -85,22 +85,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Detectamos si estamos en producción (Render) mediante la variable DATABASE_URL
 if os.environ.get('DATABASE_URL'):
+    # CONFIGURACIÓN PARA PRODUCCIÓN (Neon / PostgreSQL)
+    # dj-database-url detecta automáticamente el formato 'postgres://...'
     DATABASES = {
         'default': dj_database_url.config(
             conn_max_age=600,
-            ssl_require=False  # Evita que dj_database_url inyecte configuraciones por defecto incorrectas
+            ssl_require=True  # Neon requiere conexión segura
         )
     }
-    
-    # 🔍 CORRECCIÓN PYMYSQL PARA EL SSL-MODE DE AIVEN EN RENDER:
-    if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
-        options = DATABASES['default']['OPTIONS']
-        if 'ssl-mode' in options:
-            ssl_value = options.pop('ssl-mode')  # Sacamos 'ssl-mode' con guion para que no rompa PyMySQL
-            if ssl_value in ['REQUIRED', 'required', True]:
-                options['ssl'] = {'ssl': True}   # Lo configuramos como lo entiende PyMySQL
 else:
     # 💻 TU CONFIGURACIÓN LOCAL (Tu PC con MariaDB)
     DATABASES = {
