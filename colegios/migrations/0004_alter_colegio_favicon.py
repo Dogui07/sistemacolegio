@@ -10,10 +10,4 @@ class Migration(migrations.Migration):
         ('colegios', '0003_colegio_tiene_cantina'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='colegio',
-            name='favicon',
-            field=models.ImageField(blank=True, null=True, upload_to=colegios.models.ruta_favicon_colegio),
-        ),
-    ]
+    operations = []
