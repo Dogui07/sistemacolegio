@@ -31,10 +31,16 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen p-4 md:p-8">
 
-    <div class="no-print max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm gap-4">
-        <a href="{% url 'ver_curso_docente' colegio.slug asignacion_id %}" class="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-            ← Volver al Curso
-        </a>
+    <div class="no-print max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm gap-4">      
+        {% if asignacion_id %}
+            <a href="{% url 'ver_curso_docente' colegio.slug asignacion_id %}" class="text-sm font-bold text-slate-600 hover:text-slate-900">
+                ← Volver al curso
+            </a>
+        {% else %}
+           <a href="{% url 'gestionar_estudiantes' colegio.slug %}" class="text-sm font-bold text-slate-600 hover:text-slate-900">
+                ← Volver atras
+            </a>
+        {% endif %}
         <button onclick="window.print();" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition cursor-pointer">
             🖨️ Imprimir o Guardar como PDF
         </button>

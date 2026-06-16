@@ -42,11 +42,17 @@
                 <i class="fas fa-file-pdf text-xs"></i>
                 Imprimir Ficha
             </a>
-            <a href="#" 
-               class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-100 tracking-wider">
-                <i class="fas fa-file-invoice text-xs"></i>
-                Boleta de Notas
-            </a>
+            {% if asignacion_id %}
+                <a href="{% url 'ver_boleta_estudiante' colegio.slug asignacion_id estudiante.id %}" 
+                target="_blank" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-100 tracking-wider">
+                <i class="fas fa-file-invoice text-xs"></i> Ver Boleta
+                </a>
+            {% else %}
+                <a href="{% url 'ver_boleta_general' colegio.slug estudiante.id %}" 
+                target="_blank" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-100 tracking-wider">
+                <i class="fas fa-file-invoice text-xs"></i> Ver Boleta
+                </a>
+            {% endif %}
         </div>
     </div>
 

@@ -1,5 +1,5 @@
 #users/views.py
-import hashlib, openpyxl, pandas as pd, calendar
+import hashlib, openpyxl, pandas as pd, calendar, os
 from io import BytesIO
 from decimal import Decimal,InvalidOperation
 from multiprocessing import context
@@ -50,6 +50,7 @@ def link_callback(uri, rel):
     else:
         return uri  # Devuelve la URL original si es de Cloudinary
     return path
+    
 
 @method_decorator(never_cache, name='dispatch')
 class ColegioLoginView(LoginView):
@@ -597,12 +598,31 @@ def reporte_final_curso(request, colegio_slug, asignacion_id):
     })
 
 @login_required
-def ver_boleta_estudiante(request, colegio_slug, asignacion_id, estudiante_id):
+def ver_boleta_estudiante(request, colegio_slug, estudiante_id, asignacion_id=None, ):
     """Genera la boleta informativa oficial e integral de un estudiante."""
     colegio = get_object_or_404(Colegio, slug=colegio_slug)
     estudiante = get_object_or_404(Persona, id=estudiante_id, colegio=colegio, es_estudiante=True)
+    
+    # 2. Buscamos la inscripción activa del estudiante (Independientemente del curso)
     inscripcion = get_object_or_404(Inscripcion, estudiante=estudiante, estado='ACTIVO', anio_escolar__activo=True)
     seccion = inscripcion.seccion
+    
+    # --- Control de Seguridad ---
+    # Si NO viene asignacion_id (es Admin o alguien general), permitimos el paso si es Admin.
+    # Si viene asignacion_id (es Docente), validamos que sea su curso.
+    if asignacion_id:
+        carga = get_object_or_404(CargaAcademica, id=asignacion_id)
+        if not request.user.is_superuser and carga.docente != request.user.perfil:
+            raise PermissionDenied
+    else:
+        # Solo superusuario o el propio representante (si añades lógica) pueden ver sin asignacion_id
+        if not request.user.is_superuser:
+            # Aquí podrías agregar lógica para permitir al representante ver la boleta de su hijo
+            raise PermissionDenied
+
+    # 3. Lógica de cálculo de notas (esto ya lo tienes, se mantiene igual)
+    cargas = CargaAcademica.objects.filter(seccion=seccion).select_related('asignatura')
+    boleta_rendimiento = []
     
     # Extraer todas las asignaturas dictadas en la sección del alumno
     cargas = CargaAcademica.objects.filter(seccion=seccion).select_related('asignatura')
@@ -3986,8 +4006,8 @@ def imprimir_ficha_estudiante_pdf(request, colegio_slug, estudiante_id):
     # --- EL TRUCO ESTÁ AQUÍ ---
     # Extraemos la ruta absoluta del sistema operativo si la foto existe
     foto_path = None
-    if estudiante.foto and hasattr(estudiante.foto, 'path'):
-        foto_path = estudiante.foto.path
+    if estudiante.foto and hasattr(estudiante.foto, 'url'):
+        foto_path = estudiante.foto.url
 
     context = {
         'colegio': colegio,
@@ -5009,44 +5029,47 @@ def descargar_boleta_representante(request, colegio_slug, estudiante_id):
     if not inscripcion:
         messages.error(request, "El estudiante no posee una inscripción activa para el año escolar corriente.")
         return redirect('dashboard_colegio', colegio_slug=colegio.slug)
+    
+    seccion = inscripcion.seccion
+    cargas_academicas = CargaAcademica.objects.filter(seccion=seccion).select_related('asignatura')
+    
+    boleta_rendimiento = []
 
-    # 6. EXTRACCIÓN DE CALIFICACIONES REALES (Estructuración matricial)
-    # Buscamos todas las materias del plan de estudio vinculadas a la sección del alumno
-    cargas_academicas = CargaAcademica.objects.filter(
-        seccion=inscripcion.seccion
-    ).select_related('asignatura')
+    # 6. Lógica según tipo de evaluación (Cualitativa vs Cuantitativa)
+    if seccion.es_cuantitativo:
+        # Lógica para Secundaria (NotaCuantitativa)
+        for c in cargas_academicas:
+            planes = PlanEvaluacion.objects.filter(carga_academica=c)
+            # Aquí consultas tus Notas Cuantitativas
+            notas = NotaCuantitativa.objects.filter(plan_evaluacion__in=planes, estudiante=estudiante)
+            
+            lapsos = {'1': '--', '2': '--', '3': '--'}
+            for n in notas:
+                lapsos[n.plan_evaluacion.lapso] = round(n.nota) # Ajusta según tu lógica de cálculo
+            
+            boleta_rendimiento.append({
+                'asignatura': c.asignatura.nombre, 
+                'lapso1': lapsos['1'], 'lapso2': lapsos['2'], 'lapso3': lapsos['3']
+            })
+    else:
+        # Lógica para Primaria/Inicial (InformeCualitativo - EL QUE TÚ USAS)
+        informes = InformeCualitativo.objects.filter(carga_academica__in=cargas_academicas, estudiante=estudiante)
+        mapa_inf = { (i.carga_academica_id, i.lapso): i.descriptor for i in informes }
+        
+        for c in cargas_academicas:
+            boleta_rendimiento.append({
+                'asignatura': c.asignatura.nombre,
+                'lapso1': mapa_inf.get((c.id, '1'), '-'),
+                'lapso2': mapa_inf.get((c.id, '2'), '-'),
+                'lapso3': mapa_inf.get((c.id, '3'), '-'),
+            })
 
-    # Buscamos todas las notas registradas de este estudiante específico
-    notas_alumno = NotaCualitativa.objects.filter(
-        estudiante=estudiante,
-        carga_academica__in=cargas_academicas
-    )
-
-    # Mapeamos las notas en un diccionario rápido: { carga_academica_id: { '1': 'C', '2': 'EP' } }
-    mapa_notas = {}
-    for nota in notas_alumno:
-        if nota.carga_academica_id not in mapa_notas:
-            mapa_notas[nota.carga_academica_id] = {}
-        mapa_notas[nota.carga_academica_id][nota.lapso] = nota.calificacion
-
-    # Construimos la lista final formateada que la plantilla recorrerá de forma limpia
-    calificaciones_finales = []
-    for carga in cargas_academicas:
-        notas_materia = mapa_notas.get(carga.id, {})
-        calificaciones_finales.append({
-            'asignatura': carga.asignatura.nombre,
-            'lapso1': notas_materia.get('1', ''),  # Mapea LapsoChoices.LAPSO_1
-            'lapso2': notas_materia.get('2', ''),  # Mapea LapsoChoices.LAPSO_2
-            'lapso3': notas_materia.get('3', ''),  # Mapea LapsoChoices.LAPSO_3
-        })
-
-    # 7. Envío de contexto hacia el template preparado para impresión
     context = {
         'colegio': colegio,
         'estudiante': estudiante,
         'anio_escolar': anio_activo,
         'inscripcion': inscripcion,
-        'calificaciones': calificaciones_finales,
+        'calificaciones': boleta_rendimiento, # Ahora es una lista lista para el template
     }
     
     return render(request, 'users/boleta_imprimible.html', context)

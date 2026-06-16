@@ -151,15 +151,5 @@
             Fecha de Emisión: {% now "d/m/Y" %}
         </div>
     </div>
-
-    <script>
-        // Cuando toda la estructura y estilos carguen, abre la ventana de impresión/Guardado PDF de forma inmediata
-        window.addEventListener('DOMContentLoaded', () => {
-            // Un pequeño delay de 300ms asegura la correcta carga del motor de estilos de Tailwind
-            setTimeout(() => {
-                window.print();
-            }, 300);
-        });
-    </script>
 </body>
 </html>

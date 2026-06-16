@@ -255,8 +255,10 @@
                                     <i class="fas fa-camera text-xs"></i>
                                 </button>
 
-                                <button type="button" onclick="verFicha('{{ estudiante.id }}')" title="Ver Ficha"
-                                class="w-9 h-9 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-600 hover:text-white transition shadow-sm">
+                                <button type="button" 
+                                        onclick="cargarEnModal('{% url 'ficha_estudiante_modal' colegio.slug estudiante.id %}')" 
+                                        title="Ver Ficha"
+                                        class="w-9 h-9 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-600 hover:text-white transition shadow-sm">
                                     <i class="fas fa-eye text-xs"></i>
                                 </button>
 
@@ -315,4 +317,43 @@
         </div>
     </div>
 </div>
+
+<div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative m-4">
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<script>
+function cargarEnModal(url) {
+    const modal = document.getElementById('modal-container');
+    const content = document.getElementById('modal-content');
+    
+    // Abrir modal y mostrar spinner
+    modal.classList.remove('hidden');
+    content.innerHTML = `
+        <div class="p-20 text-center">
+            <i class="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
+            <p class="text-slate-500 font-bold">Cargando información...</p>
+        </div>`;
+
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            content.innerHTML = html;
+        })
+        .catch(error => {
+            content.innerHTML = '<p class="p-5 text-red-500">Error al cargar.</p>';
+        });
+}
+
+// Función para cerrar
+function cerrarModalFicha() {
+    document.getElementById('modal-container').classList.add('hidden');
+}
+
+document.getElementById('modal-container').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+</script>
 {% endblock %}

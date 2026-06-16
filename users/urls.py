@@ -41,10 +41,13 @@ urlpatterns = [
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/reporte-final/', views.reporte_final_curso, name='reporte_final_curso'),
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/importar-plantilla/', views.importar_plantilla_excel, name='importar_plantilla_excel'),
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/exportar-plantilla/', views.exportar_plantilla_excel, name='exportar_plantilla_excel'),
+    # Ruta para el docente (mantiene el comportamiento actual)
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/ver-boleta/<int:estudiante_id>/', views.ver_boleta_estudiante, name='ver_boleta_estudiante'),
+    # Ruta para ver boleta general (sin asignacion_id)
+    path('<slug:colegio_slug>/ver-boleta-general/<int:estudiante_id>/', views.ver_boleta_estudiante, name='ver_boleta_general'),
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/reporte-final/<int:estudiante_id>/', views.reporte_final_curso, name='reporte_final_curso'),
     path('<slug:colegio_slug>/docente/curso/<int:asignacion_id>/imprimir-todas/', views.imprimir_todas_boletas, name='imprimir_todas_boletas'),
-   # GESTIÓN DE ADMINISTRATIVOS
+    # GESTIÓN DE ADMINISTRATIVOS
     path('<slug:colegio_slug>/personas/administrativos/', views.gestionar_administrativos, name='gestionar_administrativos'),
     path('<slug:colegio_slug>/personas/administrativos/crear/', views.crear_administrativo, name='crear_administrativo'),
     path('<slug:colegio_slug>/personas/administrativos/editar/<int:persona_id>/', views.editar_administrativo, name='editar_administrativo'),
