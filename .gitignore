@@ -12,9 +12,15 @@ db.sqlite3
 
 # Archivos de Python (caché)
 __pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
 
 # Archivos de configuración de IDE (VS Code o PyCharm)
 .vscode/
 .idea/
+
+# Media y archivos de sistema
+.DS_Store
+media/
