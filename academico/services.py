@@ -1,3 +1,4 @@
+#services.py
 import requests
 from bs4 import BeautifulSoup
 from django.utils import timezone
@@ -68,3 +69,44 @@ def obtener_tasa_vigente():
 
     # Si todo falla (BCV caído y API caída), usamos la última registrada como salvavidas
     return ultima_tasa.precio if ultima_tasa else None
+
+def rellenar_dias_faltantes():
+    ultima_tasa = TasaCambio.objects.filter(moneda="USD").order_by('-fecha').first()
+    if not ultima_tasa: return
+
+    hoy = timezone.now().date()
+    if ultima_tasa.fecha >= hoy: return
+
+    precio_a_propagar = ultima_tasa.precio
+    fecha_cursor = ultima_tasa.fecha + timedelta(days=1)
+    
+    while fecha_cursor < hoy:
+        # Aquí marcamos es_manual=False porque el sistema lo está generando
+        TasaCambio.objects.get_or_create(
+            moneda="USD",
+            fecha=fecha_cursor,
+            defaults={"precio": precio_a_propagar, "es_manual": False}
+        )
+        fecha_cursor += timedelta(days=1)
+
+def asegurar_historico_15_dias():
+    hoy = timezone.now().date()
+    # Obtenemos el último precio conocido real
+    ultimo_registro = TasaCambio.objects.order_by('-fecha').first()
+
+    if not ultimo_registro:
+        return
+    
+    precio_base = ultimo_registro.precio if ultimo_registro else 0
+
+    for i in range(15):
+        fecha_a_verificar = hoy - timedelta(days=i)
+
+        if not TasaCambio.objects.filter(fecha=fecha_a_verificar).exists():
+            TasaCambio.objects.create(
+                fecha=fecha_a_verificar,
+                precio=precio_base,
+                moneda="USD", # Asegúrate de especificar la moneda
+                es_manual=False,
+                es_estimado=True  # Marcado en rojo
+            )   

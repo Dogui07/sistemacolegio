@@ -96,9 +96,7 @@
             </td>
             <td style="width: 150px; border: none; vertical-align: top; text-align: right;">
                 {% if administrativo.foto %}
-                <p>DEBUG URL: "{{ persona.foto }}"</p>
-<p>DEBUG URL ATTR: "{{ persona.foto.url }}"</p>
-                    <img src="{{ persona.foto.url }}" class="foto">
+                    <img src="{{ administrativo.foto.url }}" class="foto">
                 {% else %}
                     <div class="foto"><br><br>SIN FOTO</div>
                 {% endif %}

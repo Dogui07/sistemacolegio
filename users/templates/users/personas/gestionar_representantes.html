@@ -192,7 +192,7 @@
                             <b>CEDULA, NOMBRE, APELLIDO, EMAIL, TELEFONO, PROFESION, FECHA_NACIMIENTO</b>
                         </p>
                     </div>
-                    <a href="{% url 'descargar_plantilla_representantes' %}" 
+                    <a href="{% url 'descargar_plantilla_representantes' colegio.slug %}" 
                     class="bg-white text-blue-600 px-3 py-2 rounded-xl text-[10px] font-black shadow-sm border border-blue-200 hover:bg-blue-600 hover:text-white transition flex items-center gap-2">
                         <i class="fas fa-download"></i> PLANTILLA
                     </a>
@@ -240,7 +240,7 @@
         const content = document.getElementById('modalFichaContent');
         
         // Cargamos el contenido dinámicamente
-        fetch(`/colegio/{{ colegio.slug }}/representantes/${id}/ficha-modal/`)
+        fetch(`/{{ colegio.slug }}/personas/representantes/${id}/ficha-modal/`)
             .then(response => response.text())
             .then(html => {
                 content.innerHTML = html;

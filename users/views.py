@@ -13,7 +13,7 @@ from academico.models import DocenteDetalle, RepresentanteDetalle, Seccion, Insc
 from colegios.models import Colegio, ImagenGaleria, Publicacion
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime, date, timedelta
-from academico.services import obtener_tasa_vigente
+from academico.services import obtener_tasa_vigente, rellenar_dias_faltantes, asegurar_historico_15_dias
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -1354,10 +1354,15 @@ def asignar_docentes_seccion(request, colegio_slug, seccion_id):
 def historico_tasa_cambio(request, colegio_slug):
     colegio = get_object_or_404(Colegio, slug=colegio_slug)
     # Al entrar aquí, el Lazy Check verifica si requiere actualizarse
-    tasa_actual = obtener_tasa_vigente()
-    
+
+    rellenar_dias_faltantes()
+
+    asegurar_historico_15_dias()
+
     # Traemos todo el registro histórico ordenado por fecha descendente
     historico_tasas = TasaCambio.objects.filter(moneda="USD").order_by('-fecha')
+    
+    tasa_actual = obtener_tasa_vigente()
     
     context = {
         'tasa_actual': tasa_actual,
@@ -1365,6 +1370,30 @@ def historico_tasa_cambio(request, colegio_slug):
         'colegio': colegio,
     }
     return render(request, 'users/tasa_cambio_historico.html', context)
+
+@login_required
+def editar_tasa(request, colegio_slug):    
+    colegio = get_object_or_404(Colegio, slug=colegio_slug)
+    if request.method == 'POST':
+        tasa_id = request.POST.get('tasa_id')
+        nuevo_precio = request.POST.get('nuevo_precio')
+
+        # Buscamos el registro específico
+        tasa = get_object_or_404(TasaCambio, id=tasa_id)
+        
+        # Actualizamos los campos
+        tasa.precio = nuevo_precio
+        tasa.es_manual = True       # Marcamos como editado manualmente
+        tasa.es_estimado = False    # Ya no es un registro "estimado"
+        tasa.usuario_edicion = request.user
+        tasa.save()
+
+        messages.success(request, f"Tasa del {tasa.fecha} actualizada a {nuevo_precio}")
+        
+        # Redirigimos de vuelta al historial
+        return redirect('tasa_cambio_historico', colegio_slug=colegio.slug)
+    
+    return redirect('tasa_cambio_historico', colegio_slug=colegio.slug)
 
 @login_required
 def gestionar_pagos(request, colegio_slug):
@@ -1600,6 +1629,19 @@ def obtener_tasa_ajax(request, colegio_slug):
             })
     except Exception as e:
         return JsonResponse({'success': False, 'precio': None, 'error': str(e)})
+
+@login_required
+@require_POST
+def editar_tasa_manual(request, tasa_id):
+    nuevo_precio = request.POST.get('precio')
+    tasa = get_object_or_404(TasaCambio, id=tasa_id)
+    
+    tasa.precio = nuevo_precio
+    tasa.es_manual = True
+    tasa.usuario_edicion = request.user  
+    tasa.save()
+    
+    return redirect('historico_tasa_cambio', colegio_slug=colegio.slug)
 
 @login_required
 def realizar_pago(request, colegio_slug):

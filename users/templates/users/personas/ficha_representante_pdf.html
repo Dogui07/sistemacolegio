@@ -18,6 +18,16 @@
         <tr>
             <td colspan="2"><span class="label">Nombre Completo</span><br><span class="value">{{ representante.nombre }} {{ representante.apellido }}</span></td>
             <td><span class="label">Cédula de Identidad</span><br><span class="value">{{ representante.cedula }}</span></td>
+            <tr>
+                <td><span class="label">Profesión</span><br><span class="value">{{ representante.profesion|default:"-" }}</span></td>
+                <td><span class="label">Teléfono</span><br><span class="value">{{ representante.telefono|default:"-" }}</span></td>
+                <td><span class="label">Edad</span><br><span class="value">{{ representante.edad|default:"-" }} Años</span></td>
+            </tr>
+            <tr>
+                <td colspan="3"><span class="label">Dirección</span><br><span class="value">{{ representante.direccion|default:"-" }}</span></td>
+            </tr>
+
+            <td<span class="label"
         </tr>
         </table>
 

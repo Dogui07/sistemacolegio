@@ -349,9 +349,19 @@ class Pago(models.Model):
 
 class TasaCambio(models.Model):
     moneda = models.CharField(max_length=3, default="USD")
-    precio = models.DecimalField(max_digits=12, decimal_places=4)
-    fecha = models.DateField(auto_now_add=True)  
-    fecha_actualizacion = models.DateTimeField(auto_now=True) # Guarda la hora exacta del último check
+    fecha = models.DateField(unique=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=4)
+    es_manual = models.BooleanField(default=False)
+    es_estimado = models.BooleanField(default=False) # Para el color rojo
+    fecha_actualizacion = models.DateTimeField(auto_now=True) # Se actualiza solo al guardar
+    
+    usuario_edicion = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        null=True, 
+        blank=True, 
+        on_delete=models.SET_NULL,
+        related_name="tasas_editadas"
+    )
 
     class Meta:
         ordering = ['-fecha', '-fecha_actualizacion']

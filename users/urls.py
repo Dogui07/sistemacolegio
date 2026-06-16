@@ -124,4 +124,5 @@ urlpatterns = [
     path('<slug:colegio_slug>/personas/representantes/buscar-ajax/', views.buscar_representante_ajax_editar_estudiante, name='buscar_representante_ajax_editar_estudiante'),
     path('<slug:colegio_slug>/buscar-estudiante-ajx/', views.buscar_estudiante_ajx, name='buscar_estudiante_ajx'),
     path('<slug:colegio_slug>/tasa-dolar/', views.historico_tasa_cambio, name='tasa_cambio_historico'),
+    path('<slug:colegio_slug>/tasa-dolar/editar/', views.editar_tasa, name='editar_tasa'),
 ]
