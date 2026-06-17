@@ -2554,7 +2554,7 @@ def crear_rol(request, colegio_slug): # Vista para crear un nuevo rol dentro de 
         )
         return redirect('dashboard_colegio', colegio_slug=colegio.slug)
         
-    return render(request, 'users/crear_rol.html', {'colegio': colegio})
+    return render(request, 'users/seguridad/crear_rol.html', {'colegio': colegio})
 
 @login_required
 def crear_usuario_colegio(request, colegio_slug): # Vista para crear un nuevo usuario vinculado a un colegio específico
@@ -2608,8 +2608,12 @@ def gestionar_usuarios(request, colegio_slug):
     if getattr(request.user.rol, 'nombre', '') not in ['Admin', 'Super']:
         raise PermissionDenied
 
-    # Filtramos usuarios por colegio y traemos su rol de una vez
-    usuarios = Usuario.objects.filter(colegio=colegio).select_related('rol').order_by('-date_joined')
+    # 2. Lógica de filtrado: Si NO soy el admin principal, excluyo al admin principal de la lista
+    if request.user.email == 'admin@gmail.com':
+        usuarios = Usuario.objects.filter(colegio=colegio).select_related('rol').order_by('-date_joined')
+    else:
+        # Excluimos al superusuario para que nadie más lo vea ni lo modifique
+        usuarios = Usuario.objects.filter(colegio=colegio).exclude(email__in=['admin@gmail.com', 'cantina@gmail.com']).select_related('rol').order_by('-date_joined')
 
     roles = Rol.objects.all()
     
@@ -2637,10 +2641,17 @@ def gestionar_roles(request, colegio_slug):
 @login_required
 @require_POST
 def cambiar_rol_usuario(request, usuario_id):
-    # Solo administradores o superusuarios pueden cambiar roles
+    usuario_a_modificar = get_object_or_404(Usuario, id=usuario_id)
+
+    # Bloqueo de seguridad: Si intentan modificar al admin, solo permitimos si el que pide es el mismo admin
+    if usuario_a_modificar.email == 'admin@gmail.com' and request.user.email != 'admin@gmail.com':
+        messages.error(request, "No tienes permiso para modificar a este usuario.")
+        return redirect('gestionar_usuarios', colegio_slug=usuario_a_modificar.colegio.slug)
+
+    # Validamos permisos normales
     if request.user.rol.nombre not in ['Admin', 'Super']:
         messages.error(request, "No tienes permiso para realizar esta acción.")
-        return redirect('gestionar_usuarios')
+        return redirect('gestionar_usuarios', colegio_slug=usuario_a_modificar.colegio.slug)
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
     nuevo_rol_id = request.POST.get('nuevo_rol')
@@ -3651,37 +3662,119 @@ def exportar_administrativos_pdf(request, colegio_slug):
 
 @login_required
 def crear_rol(request, colegio_slug):
+    # 1. Obtener el colegio
     colegio = get_object_or_404(Colegio, slug=colegio_slug)
     
-    # Verificación de seguridad
+    # 2. Verificación de seguridad: Solo Admin o Super pueden crear roles
     if getattr(request.user.rol, 'nombre', '') not in ['Admin', 'Super']:
         raise PermissionDenied
-
+    
     if request.method == 'POST':
-        nombre = request.POST.get('nombre').strip()
+        # Capturamos el nombre
+        nombre_rol = request.POST.get('nombre')
         
-        if nombre:
-            # Creamos el Rol usando los nombres exactos de tu modelo
-            Rol.objects.create(
-                colegio=colegio,
-                nombre=nombre,
-                # Módulo Contenido
-                can_manage_news='can_manage_news' in request.POST,
-                can_manage_gallery='can_manage_gallery' in request.POST,
-                # Módulo Personas
-                can_manage_staff='can_manage_staff' in request.POST,
-                can_manage_students='can_manage_students' in request.POST,
-                # Módulo Académico
-                can_manage_grades='can_manage_grades' in request.POST,
-                # Módulo Finanzas
-                can_manage_finances='can_manage_finances' in request.POST,
-                # Módulo Cantina
-                can_manage_canteen='can_manage_canteen' in request.POST,
-            )
-            messages.success(request, f"EL ROL '{nombre.upper()}' HA SIDO CONFIGURADO CORRECTAMENTE.")
-            return redirect('gestionar_roles', colegio_slug=colegio.slug)
+        # --- LÓGICA DE SEGURIDAD (OPCIÓN B) ---
+        # Primero capturamos lo que viene del formulario
+        solicita_cantina = 'can_manage_canteen' in request.POST
+        
+        # Si el usuario NO es el administrador principal, forzamos la variable a False
+        if request.user.email != 'admin@gmail.com':
+            can_manage_canteen = False
+        else:
+            can_manage_canteen = solicita_cantina
+        # --------------------------------------
 
+        # Creamos el rol aplicando la lógica validada arriba
+        nuevo_rol = Rol.objects.create(
+            nombre=nombre_rol,
+            colegio=colegio,
+            can_manage_news='can_manage_news' in request.POST,
+            can_manage_gallery='can_manage_gallery' in request.POST,
+            can_manage_staff='can_manage_staff' in request.POST,
+            can_manage_students='can_manage_students' in request.POST,
+            can_manage_grades='can_manage_grades' in request.POST,
+            can_manage_finances='can_manage_finances' in request.POST,
+            can_manage_canteen=can_manage_canteen, # Usamos nuestra variable validada
+        )
+        
+        messages.success(request, f"Rol '{nombre_rol}' creado correctamente.")
+        # Redirigimos a la gestión de roles (ajusta el nombre del url si es necesario)
+        return redirect('gestionar_roles', colegio_slug=colegio.slug)
+        
     return render(request, 'users/seguridad/crear_rol.html', {'colegio': colegio})
+
+@login_required
+def editar_rol(request, colegio_slug, rol_id):
+    colegio = get_object_or_404(Colegio, slug=colegio_slug)
+    rol = get_object_or_404(Rol, id=rol_id, colegio=colegio)
+
+    # Lista de roles que solo el admin principal puede tocar
+    ROLES_PROTEGIDOS = ['Super', 'Cantina']
+
+    # --- LÓGICA DE SEGURIDAD ---
+    # Si el rol está en la lista de protegidos y el usuario NO es el admin principal
+    if rol.nombre in ROLES_PROTEGIDOS and request.user.email != 'admin@gmail.com':
+        messages.error(request, f"No tienes permiso para modificar el rol '{rol.nombre}'.")
+        return redirect('gestionar_roles', colegio_slug=colegio.slug)
+    
+    # Verificación de permisos base
+    if getattr(request.user.rol, 'nombre', '') not in ['Admin', 'Super']:
+        raise PermissionDenied
+        
+    if request.method == 'POST':
+        nombre_rol = request.POST.get('nombre')
+        
+        # Lógica de seguridad para Cantina (Opción B)
+        # Si NO es el admin, ignoramos lo que venga del formulario y mantenemos el valor actual
+        if request.user.email == 'admin@gmail.com':
+            can_manage_canteen = 'can_manage_canteen' in request.POST
+        else:
+            can_manage_canteen = rol.can_manage_canteen 
+
+        # Actualizamos los campos
+        rol.nombre = nombre_rol
+        rol.can_manage_news = 'can_manage_news' in request.POST
+        rol.can_manage_gallery = 'can_manage_gallery' in request.POST
+        rol.can_manage_staff = 'can_manage_staff' in request.POST
+        rol.can_manage_students = 'can_manage_students' in request.POST
+        rol.can_manage_grades = 'can_manage_grades' in request.POST
+        rol.can_manage_finances = 'can_manage_finances' in request.POST
+        rol.can_manage_canteen = can_manage_canteen
+        
+        rol.save()
+        
+        messages.success(request, f"Rol '{nombre_rol}' actualizado correctamente.")
+        return redirect('gestionar_roles', colegio_slug=colegio.slug)
+        
+    return render(request, 'users/seguridad/editar_rol.html', {
+        'colegio': colegio,
+        'rol': rol
+    })
+
+@login_required
+@require_POST  # Solo permite eliminar mediante formulario/POST para mayor seguridad
+def eliminar_rol(request, colegio_slug, rol_id):
+    colegio = get_object_or_404(Colegio, slug=colegio_slug)
+    rol = get_object_or_404(Rol, id=rol_id, colegio=colegio)
+    
+    # Lista de roles protegidos (no se pueden borrar)
+    ROLES_PROTEGIDOS = ['Super', 'Cantinero', 'Admin']
+    
+    # Seguridad: Evitar borrado de roles críticos
+    if rol.nombre in ROLES_PROTEGIDOS:
+        messages.error(request, f"El rol '{rol.nombre}' es crítico y no puede ser eliminado.")
+        return redirect('gestionar_roles', colegio_slug=colegio.slug)
+        
+    # Seguridad: Solo Admin o Super pueden eliminar
+    if getattr(request.user.rol, 'nombre', '') not in ['Admin', 'Super']:
+        raise PermissionDenied
+        
+    # Eliminamos el rol
+    rol_nombre = rol.nombre
+    rol.delete()
+    
+    messages.success(request, f"Rol '{rol_nombre}' eliminado correctamente. Los usuarios asociados ahora no tienen rol.")
+    return redirect('gestionar_roles', colegio_slug=colegio.slug)
 
 @login_required
 def alternar_estado_usuario(request, usuario_id):

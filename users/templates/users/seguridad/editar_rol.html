@@ -1,0 +1,66 @@
+{% extends "users/base_dashboard.html" %}
+
+{% block content_dashboard %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Editar Rol: {{ rol.nombre }}</h1>
+        <p class="text-slate-500 text-sm">Modifica los permisos de acceso para este perfil.</p>
+    </div>
+
+    <form method="POST" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Nombre del Rol</label>
+            <input type="text" name="nombre" value="{{ rol.nombre }}" required
+                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_news" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_news %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Noticias</span>
+            </label>
+
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_gallery" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_gallery %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Galería</span>
+            </label>
+
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_staff" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_staff %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Personal</span>
+            </label>
+
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_students" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_students %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Estudiantes</span>
+            </label>
+
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_grades" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_grades %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Notas</span>
+            </label>
+
+            <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input type="checkbox" name="can_manage_finances" class="w-4 h-4 text-blue-600 rounded" {% if rol.can_manage_finances %}checked{% endif %}>
+                <span class="ml-3 text-sm font-medium text-slate-700">Gestión de Finanzas</span>
+            </label>
+            
+            <div class="{% if request.user.email != 'admin@gmail.com' %}opacity-50{% endif %}">
+                <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" name="can_manage_canteen" class="w-4 h-4 text-emerald-600 rounded" 
+                           {% if rol.can_manage_canteen %}checked{% endif %}
+                           {% if request.user.email != 'admin@gmail.com' %}disabled{% endif %}>
+                    <span class="ml-3 text-sm font-medium text-slate-700">Cantina (Solo Admin)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex gap-4">
+            <a href="{% url 'gestionar_roles' colegio.slug %}" class="flex-1 text-center py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition">Cancelar</a>
+            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">Guardar Cambios</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

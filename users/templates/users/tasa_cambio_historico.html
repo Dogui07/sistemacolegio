@@ -4,25 +4,18 @@
 <div class="p-6 space-y-6 text-slate-800">
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-5">
-        <div class="flex items-center gap-3">
-            {% if request.user.rol.nombre == 'Representante' and pago_id %}
-                <a href="{% url 'realizar_pago' colegio.slug %}?pago_id={{ pago_id }}" 
-                class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition shadow-sm border border-slate-200">
-                    <i class="fas fa-chevron-left text-sm"></i>
-                </a>
-            {% endif %}
-            
+        <div class="flex items-center gap-3">          
+                {% if pago_id %}
+                    <a href="{% url 'realizar_pago' colegio.slug %}?pago_id={{ pago_id }}" 
+                    class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition shadow-sm border border-slate-200">
+                        <i class="fas fa-chevron-left text-sm"></i>
+                    </a> 
+                {% endif %}
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-950">Historial Tasa de Cambio</h1>
                 <p class="text-sm text-slate-500 mt-1">Monitoreo automático del Dólar Oficial BCV.</p>
             </div>
         </div>
-
-
-        
-
-
-        
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center shadow-sm">
             <div class="mr-3 p-2 bg-emerald-500 rounded-lg text-white flex items-center justify-center w-10 h-10">
                 <i class="fas fa-dollar-sign text-lg"></i>
