@@ -1358,15 +1358,22 @@ def historico_tasa_cambio(request, colegio_slug):
     rellenar_dias_faltantes()
 
     asegurar_historico_15_dias()
-
-    # Traemos todo el registro histórico ordenado por fecha descendente
-    historico_tasas = TasaCambio.objects.filter(moneda="USD").order_by('-fecha')
     
     tasa_actual = obtener_tasa_vigente()
+
+    tasas_list = TasaCambio.objects.filter(moneda='USD').order_by('-fecha')
+
+    pago_id = request.GET.get('pago_id')
+    
+    paginator = Paginator(tasas_list, 15) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     context = {
+        'pago_id': pago_id,
+        'page_obj': page_obj,
         'tasa_actual': tasa_actual,
-        'historico_tasas': historico_tasas,
+        'tasas_list': tasas_list,
         'colegio': colegio,
     }
     return render(request, 'users/tasa_cambio_historico.html', context)
@@ -1866,6 +1873,7 @@ def realizar_pago(request, colegio_slug):
         'metodos_pago': Pago.METODOS_PAGO, 
         'bancos': Pago.BANCOS,
         'tasa_actual': tasa_precio,        
+        'pago_id': pago_id_get,
     })
 
 @login_required
