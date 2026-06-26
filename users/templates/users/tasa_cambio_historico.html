@@ -56,22 +56,17 @@
                         </td>
                         <td class="py-4 px-6 text-right font-bold">
                             <span class="
-                                {% if registro.es_manual %} text-orange-400
-                                {% elif registro.es_estimado %} text-red-600 
-                                {% else %} text-emerald-600 
+                                {% if registro.es_manual %} text-orange-400 border border-orange-200 rounded px-2 opacity-1 group-hover:opacity-100 transition
+                                {% elif registro.es_estimado %} text-red-600 border border-red-200 rounded px-2 opacity-1 group-hover:opacity-100 transition
+                                {% else %} text-emerald-600 border border-emerald-200 rounded px-2 opacity-1 group-hover:opacity-100 transition
                                 {% endif %}"
                                 {% if registro.es_manual %} title="Editado"
                                 {% elif registro.es_estimado %} title="Estimado" 
                                 {% else %} title="Automatico"
                                 {% endif %}>
-                                {% if registro.es_estimado %}
-                                    <button onclick="abrirModalEditar('{{ registro.id }}', '{{ registro.precio }}')" 
-                                        class="text-red-500 border border-red-500 rounded px-2 opacity-1 group-hover:opacity-100 transition">
-                                        Bs. {{ registro.precio|floatformat:4 }}
-                                    </button>
-                                {% else %}
+                                <button onclick="abrirModalEditar('{{ registro.id }}', '{{ registro.precio }}')">
                                     Bs. {{ registro.precio|floatformat:4 }}
-                                {% endif %}
+                                </button>
                             </span>
                         </td>
                         <td class="py-4 px-6 text-center text-slate-500 text-xs">

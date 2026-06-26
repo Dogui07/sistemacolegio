@@ -351,7 +351,7 @@ class TasaCambio(models.Model):
     moneda = models.CharField(max_length=3, default="USD")
     fecha = models.DateField(unique=True)
     precio = models.DecimalField(max_digits=10, decimal_places=4)
-    es_manual = models.BooleanField(default=False)
+    es_manual = models.BooleanField(default=False) # Para el color naranja
     es_estimado = models.BooleanField(default=False) # Para el color rojo
     fecha_actualizacion = models.DateTimeField(auto_now=True) # Se actualiza solo al guardar
     
