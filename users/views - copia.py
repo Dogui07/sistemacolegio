@@ -13,7 +13,7 @@ from academico.models import DocenteDetalle, RepresentanteDetalle, Seccion, Insc
 from colegios.models import Colegio, ImagenGaleria, Publicacion
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime, date, timedelta
-from academico.services import obtener_tasa_vigente, rellenar_dias_faltantes, asegurar_historico_15_dias, verificar_y_actualizar_tasas
+from academico.services import obtener_tasa_vigente, rellenar_dias_faltantes, asegurar_historico_15_dias
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -1355,10 +1355,12 @@ def historico_tasa_cambio(request, colegio_slug):
     colegio = get_object_or_404(Colegio, slug=colegio_slug)
     # Al entrar aquí, el Lazy Check verifica si requiere actualizarse
 
-    # Ejecuta la verificación, consulta del día y relleno de 15 días
-    verificar_y_actualizar_tasas()
+    rellenar_dias_faltantes()
+
+    asegurar_historico_15_dias()
     
     tasa_actual = obtener_tasa_vigente()
+
     tasas_list = TasaCambio.objects.filter(moneda='USD').order_by('-fecha')
 
     pago_id = request.GET.get('pago_id')
@@ -1366,11 +1368,7 @@ def historico_tasa_cambio(request, colegio_slug):
     paginator = Paginator(tasas_list, 15) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    rellenar_dias_faltantes()
-
-    asegurar_historico_15_dias()
-        
+    
     context = {
         'pago_id': pago_id,
         'page_obj': page_obj,
@@ -1441,9 +1439,6 @@ def editar_tasa(request, colegio_slug):
 def gestionar_pagos(request, colegio_slug):
     colegio = get_object_or_404(Colegio, slug=colegio_slug)
     user = request.user
-
-    # Asegurar que la tasa del día y el histórico de 15 días estén al día al entrar a pagos
-    verificar_y_actualizar_tasas()
     
     # 1. Parámetros de control y filtros
     query = request.GET.get('q', '').strip()
